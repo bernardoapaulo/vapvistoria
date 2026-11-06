@@ -4,6 +4,7 @@ Pode ser executado várias vezes sem duplicar registros.
 
 Uso:  python manage.py popular_dados
 """
+import os
 from datetime import date
 
 from django.contrib.auth import get_user_model
@@ -20,8 +21,9 @@ CATEGORIA = TipoServico.Categoria
 
 USUARIOS = [
     # (username, senha, grupo, é_staff)
-    ("admin_teste", "Admin@12345", ADMINISTRADOR, True),
-    ("funcionario_teste", "Func@12345", FUNCIONARIO, False),
+    # Em um site público, defina SENHA_ADMIN_TESTE e SENHA_FUNCIONARIO_TESTE para não usar as senhas do README.
+    ("admin_teste", os.environ.get("SENHA_ADMIN_TESTE") or "Admin@12345", ADMINISTRADOR, True),
+    ("funcionario_teste", os.environ.get("SENHA_FUNCIONARIO_TESTE") or "Func@12345", FUNCIONARIO, False),
 ]
 
 # CPFs/CNPJs abaixo são números de exemplo com dígitos verificadores válidos.
@@ -182,4 +184,5 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("Dados fictícios criados."))
         self.stdout.write("Usuários de teste:")
         for username, senha, grupo, _ in USUARIOS:
-            self.stdout.write(f"  {username} / {senha}  ({grupo})")
+            mostra = "(senha definida por variável de ambiente)" if os.environ.get("SENHA_ADMIN_TESTE") else senha
+            self.stdout.write(f"  {username} / {mostra}  ({grupo})")

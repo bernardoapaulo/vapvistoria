@@ -114,6 +114,17 @@ App `financeiro/` (somente Administrador). O dinheiro nasce dos atendimentos, se
 - **Logo:** o arquivo recebido é pequeno (225 px, JPEG). A versão clara (`logo-vap-clara.png`, barra lateral e favicon) e a versão sobre fundo transparente (`logo-vap.png`, login, erros e impressão) foram geradas dele; para ficar nítida em tamanho grande, troque por um SVG ou PNG de alta resolução.
 - Páginas `403`, `404` e `500` com a identidade da empresa e caminho de volta.
 
+## Publicar na Vercel
+
+O projeto já tem `vercel.json` (roda `migrate` no build) e a Vercel detecta o Django pelo `manage.py`. O que a Vercel **não** oferece é disco: o SQLite não funciona lá, então é preciso um Postgres externo.
+
+1. **Banco:** no painel da Vercel, aba *Storage*, crie um Postgres (Neon) e conecte ao projeto; isso define `DATABASE_URL` sozinho. (Ou use qualquer Postgres e defina `DATABASE_URL` à mão.)
+2. **Variáveis** (Settings > Environment Variables): `SECRET_KEY` (uma chave longa e aleatória; gere com `python -c "import secrets; print(secrets.token_urlsafe(50))"`) e `DEBUG=False`. Para domínio próprio, também `ALLOWED_HOSTS` e `CSRF_TRUSTED_ORIGINS`.
+3. **Deploy:** *Redeploy*. O build aplica as migrações no Postgres.
+4. **Dados e usuários de teste** (uma vez, do seu computador): `vercel env pull .env.local`, depois, com `SENHA_ADMIN_TESTE` e `SENHA_FUNCIONARIO_TESTE` definidas, `python manage.py popular_dados` apontando para o banco da Vercel (copie `DATABASE_URL` do `.env.local` para o `.env`). Em um site **público**, não use as senhas do README.
+
+Limites conhecidos: arquivos enviados (fotos e documentos de alunos, comprovantes) ficam em `/tmp` e **somem** quando a função é reciclada; para produção real, use um armazenamento externo (S3, Vercel Blob). Os arquivos estáticos são servidos pela CDN da Vercel.
+
 ## Estrutura
 
 ```

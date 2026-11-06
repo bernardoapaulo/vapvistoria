@@ -14,16 +14,25 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv(BASE_DIR / ".env")
 
+# A Vercel define VERCEL=1 no build e na execução. Lá o disco é somente leitura e não guarda nada
+# entre execuções, então o banco precisa ser externo (Postgres) e os envios de arquivo são temporários.
+NA_VERCEL = bool(os.environ.get("VERCEL"))
+
 SECRET_KEY = os.environ.get("SECRET_KEY", "")
 DEBUG = os.environ.get("DEBUG", "False").lower() in ("1", "true", "sim")
 ALLOWED_HOSTS = [h.strip() for h in os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()]
+# Domínio próprio na Vercel: acrescente-o em ALLOWED_HOSTS e em CSRF_TRUSTED_ORIGINS (https://seudominio.com.br).
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",") if o.strip()]
+if NA_VERCEL:
+    ALLOWED_HOSTS.append(".vercel.app")
+    CSRF_TRUSTED_ORIGINS.append("https://*.vercel.app")
 
 if not SECRET_KEY:
     if DEBUG:
         # Apenas para desenvolvimento local; em produção a variável é obrigatória.
         SECRET_KEY = "chave-insegura-somente-desenvolvimento"
     else:
-        raise RuntimeError("Defina SECRET_KEY no arquivo .env (veja .env.example).")
+        raise RuntimeError("Defina SECRET_KEY: no arquivo .env (veja .env.example) ou, na Vercel, em Settings > Environment Variables.")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -72,10 +81,12 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 # Banco: SQLite por padrão; defina DATABASE_URL (ex.: postgres://...) para trocar.
+if NA_VERCEL and not os.environ.get("DATABASE_URL"):
+    raise RuntimeError("Na Vercel o SQLite não funciona (disco somente leitura). Crie um banco Postgres e defina DATABASE_URL.")
 DATABASES = {
     "default": dj_database_url.parse(
         os.environ.get("DATABASE_URL") or f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-        conn_max_age=600,
+        conn_max_age=0 if NA_VERCEL else 600,   # função sem servidor: não deixar conexões abertas
     )
 }
 
@@ -101,6 +112,11 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 # Comprovantes de despesas: fora de static/media, só servidos pela view protegida.
 ARQUIVOS_PRIVADOS_ROOT = BASE_DIR / "arquivos_privados"
+if NA_VERCEL:
+    # Único lugar gravável na Vercel; os arquivos somem quando a função é reciclada (use um armazenamento
+    # externo, como S3 ou Vercel Blob, se isto virar um sistema de produção).
+    MEDIA_ROOT = Path("/tmp/vap/media")
+    ARQUIVOS_PRIVADOS_ROOT = Path("/tmp/vap/arquivos_privados")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -111,3 +127,10 @@ LOGOUT_REDIRECT_URL = "login"
 
 # Itens por página nas listagens
 ITENS_POR_PAGINA = 15
+
+# Segurança em produção (só na Vercel, que sempre serve por HTTPS)
+if NA_VERCEL and not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
