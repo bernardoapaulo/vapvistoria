@@ -116,12 +116,12 @@ App `financeiro/` (somente Administrador). O dinheiro nasce dos atendimentos, se
 
 ## Publicar na Vercel
 
-O projeto já tem `vercel.json` (roda `migrate` no build) e a Vercel detecta o Django pelo `manage.py`. O que a Vercel **não** oferece é disco: o SQLite não funciona lá, então é preciso um Postgres externo.
+O projeto já tem `vercel.json` (roda `build.py`: migra o banco e, se pedido, carrega dados de exemplo) e a Vercel detecta o Django pelo `manage.py`. O que a Vercel **não** oferece é disco: o SQLite não funciona lá, então é preciso um Postgres externo.
 
 1. **Banco:** no painel da Vercel, aba *Storage*, crie um Postgres (Neon) e conecte ao projeto; isso define `DATABASE_URL` sozinho. (Ou use qualquer Postgres e defina `DATABASE_URL` à mão.)
 2. **Variáveis** (Settings > Environment Variables): `SECRET_KEY` (uma chave longa e aleatória; gere com `python -c "import secrets; print(secrets.token_urlsafe(50))"`) e `DEBUG=False`. Para domínio próprio, também `ALLOWED_HOSTS` e `CSRF_TRUSTED_ORIGINS`.
 3. **Deploy:** *Redeploy*. O build aplica as migrações no Postgres.
-4. **Dados e usuários de teste** (uma vez, do seu computador): `vercel env pull .env.local`, depois, com `SENHA_ADMIN_TESTE` e `SENHA_FUNCIONARIO_TESTE` definidas, `python manage.py popular_dados` apontando para o banco da Vercel (copie `DATABASE_URL` do `.env.local` para o `.env`). Em um site **público**, não use as senhas do README.
+4. **Dados e usuários de teste (no próprio deploy):** em Environment Variables defina `CARREGAR_DADOS_FICTICIOS=1`, `SENHA_ADMIN_TESTE` e `SENHA_FUNCIONARIO_TESTE` (senhas suas, **não** as do README: o comando recusa carregar na Vercel sem elas) e faça *Redeploy*. O `build.py` migra o banco e cria os dados fictícios e os usuários `admin_teste` e `funcionario_teste`. Depois pode apagar `CARREGAR_DADOS_FICTICIOS`; rodar de novo não duplica nada. (Alternativa pelo seu computador: defina `DATABASE_URL`, as duas senhas e rode `python manage.py popular_dados`.)
 
 Limites conhecidos: arquivos enviados (fotos e documentos de alunos, comprovantes) ficam em `/tmp` e **somem** quando a função é reciclada; para produção real, use um armazenamento externo (S3, Vercel Blob). Os arquivos estáticos são servidos pela CDN da Vercel.
 

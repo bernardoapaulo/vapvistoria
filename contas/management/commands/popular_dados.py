@@ -8,7 +8,7 @@ import os
 from datetime import date
 
 from django.contrib.auth import get_user_model
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
 from agenda.dados_ficticios import gerar_agendamentos
 from atendimentos.dados_ficticios import gerar_atendimentos
@@ -119,6 +119,9 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        # Em site público (Vercel) as senhas do README não podem ser usadas: exige senhas próprias.
+        if os.environ.get("VERCEL") and not (os.environ.get("SENHA_ADMIN_TESTE") and os.environ.get("SENHA_FUNCIONARIO_TESTE")):
+            raise CommandError("Na Vercel, defina SENHA_ADMIN_TESTE e SENHA_FUNCIONARIO_TESTE (senhas suas) antes de carregar os dados.")
         criar_grupos()
         Usuario = get_user_model()
         from django.contrib.auth.models import Group
