@@ -32,7 +32,12 @@ if not SECRET_KEY:
         # Apenas para desenvolvimento local; em produção a variável é obrigatória.
         SECRET_KEY = "chave-insegura-somente-desenvolvimento"
     else:
-        raise RuntimeError("Defina SECRET_KEY: no arquivo .env (veja .env.example) ou, na Vercel, em Settings > Environment Variables.")
+        # Diagnóstico: só os NOMES das variáveis (nunca os valores), para ver se a SECRET_KEY chegou ao build.
+        parecidas = sorted(k for k in os.environ if any(t in k.upper() for t in ("SECRET", "DATABASE", "POSTGRES", "DEBUG")))
+        raise RuntimeError(
+            "Defina SECRET_KEY: no arquivo .env (veja .env.example) ou, na Vercel, em Settings > Environment Variables "
+            f"(marque Production e Preview e faça Redeploy). Variáveis parecidas vistas agora: {parecidas or 'nenhuma'}."
+        )
 
 INSTALLED_APPS = [
     "django.contrib.admin",
