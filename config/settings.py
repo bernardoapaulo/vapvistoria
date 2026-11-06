@@ -86,11 +86,13 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 # Banco: SQLite por padrão; defina DATABASE_URL (ex.: postgres://...) para trocar.
-if NA_VERCEL and not os.environ.get("DATABASE_URL"):
-    raise RuntimeError("Na Vercel o SQLite não funciona (disco somente leitura). Crie um banco Postgres e defina DATABASE_URL.")
+# A integração Postgres/Neon da Vercel pode chamar a variável de POSTGRES_URL em vez de DATABASE_URL.
+URL_DO_BANCO = os.environ.get("DATABASE_URL") or os.environ.get("POSTGRES_URL") or ""
+if NA_VERCEL and not URL_DO_BANCO:
+    raise RuntimeError("Na Vercel o SQLite não funciona (disco somente leitura). Crie um banco Postgres em Storage e conecte ao projeto (variável DATABASE_URL).")
 DATABASES = {
     "default": dj_database_url.parse(
-        os.environ.get("DATABASE_URL") or f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        URL_DO_BANCO or f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
         conn_max_age=0 if NA_VERCEL else 600,   # função sem servidor: não deixar conexões abertas
     )
 }
