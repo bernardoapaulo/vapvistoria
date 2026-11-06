@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block titulo %}Excluir {{ nome_modelo }}{% endblock %}
+{% block conteudo %}
+  <h1>Excluir {{ nome_modelo }}</h1>
+  <form method="post" class="cartao">
+    {% csrf_token %}
+    <p>Tem certeza de que deseja excluir <strong>{{ object }}</strong>? Esta ação não pode ser desfeita.</p>
+    <div class="acoes">
+      <button type="submit" class="btn btn--perigo">Sim, excluir</button>
+      <a class="btn btn--secundario" href="{{ object.get_absolute_url }}">Cancelar</a>
+    </div>
+  </form>
+{% endblock %}

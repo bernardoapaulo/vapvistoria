@@ -1,0 +1,2 @@
+{# Etiqueta de status do agendamento (e "Atrasado", quando faltou dar baixa). Uso: include com g=agendamento #}
+<span class="etiqueta etiqueta--agenda-{{ g.status }}">{{ g.get_status_display }}</span>{% if g.atrasado %} <span class="etiqueta etiqueta--atrasado">Atrasado</span>{% endif %}

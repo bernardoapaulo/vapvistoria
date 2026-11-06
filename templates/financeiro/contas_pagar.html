@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load financeiro_extras %}
+{% block titulo %}Contas a pagar{% endblock %}
+{% block conteudo %}
+  <div class="cabecalho-pagina">
+    <h1>Contas a pagar</h1>
+    <a class="btn" href="{% url 'despesa_novo' %}">Nova despesa</a>
+  </div>
+  {% include "partials/abas_financeiro.html" with aba="pagar" %}
+
+  <p class="campo__ajuda">Despesas ainda não pagas, pelo vencimento. As despesas marcadas como “repetir todo mês” são geradas automaticamente ao abrir esta tela.</p>
+  <div class="faixas">
+    {% for f in faixas %}
+      <a class="faixa {% if f.atrasada and f.valor %}faixa--atrasada{% endif %}" href="?{% if request.GET.categoria %}categoria={{ request.GET.categoria }}&{% endif %}faixa={{ f.chave }}">
+        <span>{{ f.rotulo }} ({{ f.quantidade }})</span><strong>{{ f.valor|moeda }}</strong>
+      </a>
+    {% endfor %}
+    <div class="faixa"><span>Total a pagar</span><strong>{{ total|moeda }}</strong></div>
+  </div>
+
+  <form method="get" class="cartao filtros nao-imprimir">
+    <div class="filtros__grade">
+      <div class="campo"><label for="id_categoria">Categoria</label>{{ form.categoria }}</div>
+      <div class="campo"><label for="id_faixa">Vencimento</label>{{ form.faixa }}</div>
+    </div>
+    <div class="acoes">
+      <button type="submit" class="btn">Filtrar</button>
+      <a class="btn btn--secundario" href="{% url 'contas_pagar' %}">Limpar</a>
+    </div>
+  </form>
+
+  <div class="cartao tabela-wrap">
+    {% if despesas %}
+    <table class="responsiva">
+      <thead><tr><th>Vencimento</th><th>Descrição</th><th>Categoria</th><th class="numero">Valor</th><th>Situação</th><th>Pagamento</th></tr></thead>
+      <tbody>
+        {% for d in despesas %}
+        <tr>
+          <td data-rotulo="Vencimento">{{ d.vencimento|date:"d/m/Y" }}</td>
+          <td data-rotulo="Descrição"><a href="{{ d.get_absolute_url }}"><strong>{{ d.descricao }}</strong></a>{% if d.fornecedor %}<br><small>{{ d.fornecedor }}</small>{% endif %}</td>
+          <td data-rotulo="Categoria">{{ d.categoria.nome }}</td>
+          <td class="numero" data-rotulo="Valor"><strong>{{ d.valor|moeda }}</strong></td>
+          <td data-rotulo="Situação">{% include "financeiro/etiqueta_despesa.html" %}{% if d.dias_de_atraso %} <small>{{ d.dias_de_atraso }} dia{{ d.dias_de_atraso|pluralize }}</small>{% endif %}</td>
+          <td>{% include "financeiro/pagar_inline.html" with voltar=request.get_full_path %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="vazio">Nenhuma despesa em aberto{% if request.GET %} para estes filtros{% endif %}.</p>
+    {% endif %}
+  </div>
+  {% include "partials/paginacao.html" %}
+{% endblock %}

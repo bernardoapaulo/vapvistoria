@@ -1,0 +1,2 @@
+{# Etiqueta de situação do pagamento. Uso: {% include "partials/etiqueta_pagamento.html" with a=atendimento %} #}
+<span class="etiqueta etiqueta--pagto-{{ a.situacao_pagamento }}">{{ a.get_situacao_pagamento_display }}</span>

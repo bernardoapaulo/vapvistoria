@@ -1,0 +1,21 @@
+{% load static %}<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <title>{% block titulo %}Erro{% endblock %} · VAP Vistoria</title>
+  {% include "partials/cabecalho_html.html" %}
+</head>
+<body>
+  {# Página independente do menu e do banco: serve para 404 e 500, que podem ocorrer sem usuário logado #}
+  <main class="centro">
+    <div class="centro__caixa erro-pagina">
+      <div class="pilula-logo"><img src="{% static 'img/logo-vap.png' %}" width="589" height="330" alt="VAP Vistoria"></div>
+      <p class="erro-pagina__codigo" aria-hidden="true">{% block codigo %}{% endblock %}</p>
+      <h1>{% block titulo_pagina %}{% endblock %}</h1>
+      <div class="cartao">
+        {% block texto %}{% endblock %}
+        <a class="btn" href="{% url 'inicio' %}">Voltar ao início</a>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

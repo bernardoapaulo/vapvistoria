@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load static financeiro_extras %}
+{% block titulo %}Financeiro{% endblock %}
+{% block conteudo %}
+  <div class="cabecalho-pagina">
+    <h1>Financeiro</h1>
+    <div class="acoes">
+      <a class="btn" href="{% url 'recebimento_novo' %}">Novo recebimento</a>
+      <a class="btn" href="{% url 'despesa_novo' %}">Nova despesa</a>
+    </div>
+  </div>
+  {% include "partials/abas_financeiro.html" with aba="dashboard" %}
+  {% include "financeiro/filtro_periodo.html" with url=request.path comparar=True %}
+  {% include "financeiro/definicoes.html" %}
+
+  <h2 class="secao">Dinheiro no período (caixa)</h2>
+  <div class="indicadores">
+    {% include "dashboard/componentes/indicador.html" with titulo="Total recebido" valor=p.recebido|moeda variacao=p.comparativo.recebido rotulo=periodo.rotulo_comparativo classe="indicador--entrada" %}
+    {% include "dashboard/componentes/indicador.html" with titulo="Despesas pagas" valor=p.pago|moeda variacao=p.comparativo.pago rotulo=periodo.rotulo_comparativo classe="indicador--saida" %}
+    {% include "dashboard/componentes/indicador.html" with titulo="Resultado" valor=p.resultado|moeda variacao=p.comparativo.resultado rotulo=periodo.rotulo_comparativo nota="Recebido − despesas pagas" %}
+    {% include "dashboard/componentes/indicador.html" with titulo="Margem" valor=p.margem|porcento variacao=p.comparativo.margem rotulo=periodo.rotulo_comparativo nota="Resultado ÷ recebido" %}
+  </div>
+
+  <h2 class="secao">Contas e previsão</h2>
+  <div class="indicadores">
+    <a class="indicador {% if p.a_receber_atrasado %}indicador--atraso{% endif %}" href="{% url 'contas_receber' %}">
+      <span class="indicador__titulo">A receber</span><strong>{{ p.a_receber|moeda }}</strong>
+      <div class="indicador__nota">{% if p.a_receber_atrasado %}{{ p.a_receber_atrasado|moeda }} em atraso{% else %}Nada em atraso{% endif %}</div>
+    </a>
+    <a class="indicador {% if p.a_pagar_vencido %}indicador--atraso{% endif %}" href="{% url 'contas_pagar' %}">
+      <span class="indicador__titulo">A pagar</span><strong>{{ p.a_pagar|moeda }}</strong>
+      <div class="indicador__nota">{% if p.a_pagar_vencido %}{{ p.a_pagar_vencido|moeda }} vencido{% else %}Nada vencido{% endif %}</div>
+    </a>
+    <a class="indicador" href="{% url 'fluxo_caixa' %}">
+      <span class="indicador__titulo">Saldo previsto (30 dias)</span><strong>{{ p.saldo_previsto|moeda }}</strong>
+      <div class="indicador__nota">A receber − a pagar até daqui a 30 dias</div>
+    </a>
+  </div>
+
+  <section class="cartao">
+    <h2>Faturamento × dinheiro recebido</h2>
+    <div class="resumo-valores">
+      <div><span>Faturamento (serviços concluídos)</span><strong>{{ p.conciliacao.faturamento|moeda }}</strong></div>
+      <div><span>Recebido no período</span><strong>{{ p.conciliacao.recebido|moeda }}</strong></div>
+      <div><span>Diferença</span><strong>{{ p.conciliacao.diferenca|moeda }}</strong></div>
+    </div>
+    <p class="campo__ajuda">O faturamento do <a href="{% url 'dashboard' %}">Dashboard de desempenho</a> conta o serviço concluído na data do atendimento, mesmo que ainda não tenha sido pago. Aqui só conta o dinheiro que entrou. A diferença vem de serviços ainda não pagos (a receber) e de pagamentos recebidos de serviços de outros períodos.</p>
+  </section>
+
+  <h2 class="secao">Gráficos</h2>
+  <div class="graficos">
+    {% include "dashboard/componentes/grafico.html" with id="g-entradas-saidas" titulo="Recebimentos × despesas (12 meses)" config=graficos.entradas_saidas %}
+    {% include "dashboard/componentes/grafico.html" with id="g-resultado" titulo="Resultado mensal (12 meses)" config=graficos.resultado %}
+    {% include "dashboard/componentes/grafico.html" with id="g-despesas" titulo="Despesas pagas por categoria" config=graficos.despesas %}
+    {% include "dashboard/componentes/grafico.html" with id="g-formas" titulo="Recebimentos por forma de pagamento" config=graficos.formas %}
+    {% include "dashboard/componentes/grafico.html" with id="g-receita" titulo="Recebido por categoria de serviço" config=graficos.receita %}
+    {% include "dashboard/componentes/grafico.html" with id="g-margem" titulo="Margem por tipo de serviço" config=graficos.margem ajuda="Faturamento do serviço menos as despesas diretas dele (competência)." %}
+  </div>
+
+  <section class="cartao">
+    <h2>Lucro por tipo de serviço (competência)</h2>
+    {% if p.margem_servico %}
+    <div class="tabela-wrap"><table class="responsiva">
+      <thead><tr><th>Serviço</th><th class="numero">Faturamento</th><th class="numero">Despesas diretas</th><th class="numero">Lucro</th><th class="numero">Margem</th></tr></thead>
+      <tbody>{% for l in p.margem_servico %}
+        <tr>
+          <td data-rotulo="Serviço"><strong>{{ l.nome }}</strong></td>
+          <td class="numero" data-rotulo="Faturamento">{{ l.receita|moeda }}</td>
+          <td class="numero" data-rotulo="Despesas diretas">{{ l.despesas|moeda }}</td>
+          <td class="numero" data-rotulo="Lucro"><span class="{% if l.lucro < 0 %}valor--saida{% else %}valor--entrada{% endif %}">{{ l.lucro|moeda }}</span></td>
+          <td class="numero" data-rotulo="Margem">{{ l.margem|porcento }}</td>
+        </tr>
+      {% endfor %}</tbody>
+    </table></div>
+    {% else %}{% include "dashboard/componentes/sem_dados.html" %}{% endif %}
+    <p class="campo__ajuda">Despesas gerais do período (vencimento no período, não distribuídas entre os serviços): <strong>{{ p.despesas_gerais|moeda }}</strong>.</p>
+  </section>
+
+  <section class="cartao">
+    <h2>Meses fechados</h2>
+    {% if meses_fechados %}
+      <p>{% for m in meses_fechados %}<span class="etiqueta mes-fechado">{{ m|date:"m/Y" }}</span> {% endfor %}</p>
+      <p class="campo__ajuda">Nestes meses não é possível criar, editar nem estornar lançamentos. <a href="{% url 'meses' %}">Gerenciar meses</a>.</p>
+    {% else %}
+      <p class="vazio">Nenhum mês fechado. <a href="{% url 'meses' %}">Gerenciar meses</a>.</p>
+    {% endif %}
+  </section>
+{% endblock %}
+{% block scripts %}
+  <script src="{% static 'vendor/chartjs/chart.umd.min.js' %}"></script>
+  <script src="{% static 'js/dashboard.js' %}"></script>
+{% endblock %}

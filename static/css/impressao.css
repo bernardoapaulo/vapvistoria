@@ -1,0 +1,23 @@
+/* ==========================================================================
+   VAP Vistoria - impressão (relatório mensal e demais telas).
+   Os tokens já trocam as cores para fundo branco e texto escuro (ver tokens.css);
+   aqui só se escondem a navegação e os efeitos e se mostra o cabeçalho com a logo.
+   ========================================================================== */
+@media print {
+  body { background: #fff; color: var(--cor-texto); font-size: 11pt; }
+  body::before { display: none; }
+  .menu, .menu-fundo, .topo-mobile, .pular-conteudo, .nao-imprimir, .acoes, .abas, .paginacao, .mensagens, .btn { display: none; }
+  .conteudo { margin: 0; padding: 0; }
+  .impressao-cabecalho { display: flex; align-items: center; justify-content: space-between; gap: var(--esp-md); padding-bottom: var(--esp-sm); margin-bottom: var(--esp-md); border-bottom: 1px solid var(--cor-borda); }
+  .impressao-cabecalho img { width: 7rem; height: auto; }
+  .impressao-cabecalho span { color: var(--cor-texto-suave); font-size: 9pt; }
+  .cartao, .cabecalho-pagina, .indicador, .faixa, .tabela-wrap {
+    background: none; box-shadow: none; border-color: var(--cor-borda);
+    -webkit-backdrop-filter: none; backdrop-filter: none; break-inside: avoid;
+  }
+  .cartao { border: 0; padding: 0; }
+  .cartao::before, .indicador::before, .indicador::after { display: none; }
+  h1 { font-size: 22pt; }
+  a { color: inherit; text-decoration: none; }
+  th, td { padding: 0.35rem 0.5rem; }
+}

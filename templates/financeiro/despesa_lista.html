@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load financeiro_extras %}
+{% block titulo %}Despesas{% endblock %}
+{% block conteudo %}
+  <div class="cabecalho-pagina">
+    <h1>Despesas</h1>
+    <a class="btn" href="{% url 'despesa_novo' %}">Nova despesa</a>
+  </div>
+  {% include "partials/abas_financeiro.html" with aba="despesas" %}
+
+  <form method="get" class="cartao filtros nao-imprimir">
+    <div class="filtros__grade">
+      <div class="campo"><label for="f-q">Busca</label>
+        <input id="f-q" type="search" name="q" value="{{ termo }}" placeholder="Descrição, fornecedor ou categoria"></div>
+      <div class="campo"><label for="id_situacao">Situação</label>{{ form.situacao }}</div>
+      <div class="campo"><label for="id_categoria">Categoria</label>{{ form.categoria }}</div>
+      <div class="campo"><label for="id_de">Vencimento de</label>{{ form.de }}</div>
+      <div class="campo"><label for="id_ate">Vencimento até</label>{{ form.ate }}</div>
+    </div>
+    <div class="acoes">
+      <button type="submit" class="btn">Filtrar</button>
+      <a class="btn btn--secundario" href="{% url 'despesa_lista' %}">Limpar</a>
+    </div>
+  </form>
+
+  <p class="periodo-info">Total do filtro: <strong class="valor--saida">{{ total|moeda }}</strong></p>
+
+  <div class="cartao tabela-wrap">
+    {% if object_list %}
+    <table class="responsiva">
+      <thead><tr><th>Vencimento</th><th>Descrição</th><th>Categoria</th><th>Serviço</th><th class="numero">Valor</th><th>Situação</th><th></th></tr></thead>
+      <tbody>
+        {% for d in object_list %}
+        <tr>
+          <td data-rotulo="Vencimento">{{ d.vencimento|date:"d/m/Y" }}</td>
+          <td data-rotulo="Descrição"><strong>{{ d.descricao }}</strong>{% if d.recorrente or d.origem_id %} <span class="etiqueta">Mensal</span>{% endif %}{% if d.fornecedor %}<br><small>{{ d.fornecedor }}</small>{% endif %}</td>
+          <td data-rotulo="Categoria">{{ d.categoria.nome }}</td>
+          <td data-rotulo="Serviço">{{ d.tipo_servico.nome|default:"Geral" }}</td>
+          <td class="numero" data-rotulo="Valor">{{ d.valor|moeda }}</td>
+          <td data-rotulo="Situação">{% include "financeiro/etiqueta_despesa.html" %}</td>
+          <td><a class="btn btn--secundario btn--pequeno" href="{{ d.get_absolute_url }}">Ver</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="vazio">Nenhuma despesa encontrada.</p>
+    {% endif %}
+  </div>
+  {% include "partials/paginacao.html" %}
+{% endblock %}

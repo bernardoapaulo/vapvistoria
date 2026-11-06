@@ -1,0 +1,214 @@
+/* ==========================================================================
+   VAP Vistoria - tokens de design (única fonte de cores, tipografia, espaços e vidro).
+   Todo o resto do CSS só usa estas variáveis. Para mudar o visual, mude aqui.
+   Os gráficos (dashboard.js) e o calendário (FullCalendar) também leem estas variáveis.
+   Um segundo tema (ex.: claro) = repetir os valores abaixo dentro de [data-tema="claro"].
+   ========================================================================== */
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../vendor/fonts/inter-latin-wght-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../vendor/fonts/inter-latin-ext-wght-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Barlow Condensed";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../vendor/fonts/barlow-condensed-latin-600-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Barlow Condensed";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../vendor/fonts/barlow-condensed-latin-700-normal.woff2") format("woff2");
+}
+
+:root {
+  color-scheme: dark;
+
+  /* ---- Marca (medidas na logo e nas referências) ---- */
+  --marca-marinho: #044464;      /* letras da logo */
+  --marca-azul: #449CC4;         /* arco da logo */
+  --marca-aqua: #3FB8C4;         /* brilho de fundo */
+  --marca-menta: #9FE8C9;        /* destaque: botões e item ativo */
+  --marca-menta-forte: #B7F2DA;
+  --marca-prata: #C9D3DB;        /* detalhes e linhas finas */
+
+  /* ---- Fundo da aplicação ---- */
+  --fundo-0: #041F2E;
+  --fundo-1: #063247;
+  --fundo-2: #05384F;
+  --fundo-aplicacao: linear-gradient(160deg, var(--fundo-2) 0%, var(--fundo-1) 38%, var(--fundo-0) 100%);
+  --brilho-aqua: radial-gradient(60rem 38rem at 85% -8%, rgba(63, 184, 196, 0.18), transparent 70%),
+                 radial-gradient(44rem 34rem at -6% 108%, rgba(68, 156, 196, 0.16), transparent 70%);
+
+  /* ---- Vidro ---- */
+  --vidro-fundo: rgba(255, 255, 255, 0.06);
+  --vidro-fundo-solido: rgba(10, 52, 74, 0.92);     /* alternativa sem backdrop-filter */
+  --vidro-denso: rgba(6, 34, 50, 0.88);              /* tabelas e listas longas: sem blur */
+  --vidro-borda: rgba(255, 255, 255, 0.16);
+  --vidro-borda-fina: rgba(201, 211, 219, 0.16);
+  --vidro-brilho: linear-gradient(135deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0) 38%);
+  --vidro-blur: 14px;
+  --vidro-sombra: 0 10px 30px rgba(0, 12, 20, 0.35);
+
+  /* ---- Texto ---- */
+  --cor-titulo: #F4FAFC;
+  --cor-texto: #E6F1F5;
+  --cor-texto-suave: #B6CBD5;
+  --cor-texto-sobre-menta: #04283A;
+  --cor-link: var(--marca-menta);
+
+  /* ---- Linhas e superfícies (nomes mantidos: o JavaScript dos gráficos os lê) ---- */
+  --cor-borda: rgba(201, 211, 219, 0.20);
+  --cor-superficie: #0A3246;                          /* sólida: borda das rosquinhas, opções de select */
+  --cor-superficie-2: rgba(255, 255, 255, 0.06);      /* linhas em destaque, cabeçalho de tabela */
+  --cor-superficie-3: rgba(255, 255, 255, 0.11);      /* hover */
+  --cor-campo: rgba(3, 24, 36, 0.62);
+  --cor-foco: #B7F2DA;
+
+  /* ---- Cores de marca antigas (mantidas por compatibilidade com os gráficos) ---- */
+  --cor-primaria: var(--marca-menta);
+  --cor-secundaria: var(--marca-azul);
+
+  /* ---- Estados ---- */
+  --cor-sucesso: #8FE3B0;   --cor-sucesso-fundo: #0F4B31;
+  --cor-erro: #FFBBB4;      --cor-erro-fundo: #5E1F25;
+  --cor-aviso: #F5C27A;     --cor-aviso-fundo: #4F3711;
+  --cor-info: #A9D4FF;      --cor-info-fundo: #174A78;
+  --cor-perigo-botao: #B3261E;        /* botão perigoso: texto branco por cima */
+  --cor-perigo-botao-hover: #8C1D17;
+
+  /* ---- Status do atendimento (texto / fundo, ambos opacos para validar o contraste) ---- */
+  --cor-status-solicitado: #D0D9E1;   --cor-status-solicitado-fundo: #2F4252;
+  --cor-status-agendado: #A9D4FF;     --cor-status-agendado-fundo: #174A78;
+  --cor-status-em_andamento: #F5C27A; --cor-status-em_andamento-fundo: #5A3D0E;
+  --cor-status-concluido: #8FE3B0;    --cor-status-concluido-fundo: #0F4B31;
+  --cor-status-cancelado: #FFA8A0;    --cor-status-cancelado-fundo: #5E1F25;
+
+  /* ---- Status do agendamento ---- */
+  --cor-agenda-agendado: #A9D4FF;        --cor-agenda-agendado-fundo: #174A78;
+  --cor-agenda-confirmado: #8FE3EC;      --cor-agenda-confirmado-fundo: #0C4B57;
+  --cor-agenda-em_andamento: #F5C27A;    --cor-agenda-em_andamento-fundo: #5A3D0E;
+  --cor-agenda-concluido: #8FE3B0;       --cor-agenda-concluido-fundo: #0F4B31;
+  --cor-agenda-cancelado: #FFA8A0;       --cor-agenda-cancelado-fundo: #5E1F25;
+  --cor-agenda-nao_compareceu: #CDBEFF;  --cor-agenda-nao_compareceu-fundo: #3E2C7A;
+  --cor-agenda-remarcado: #D0D9E1;       --cor-agenda-remarcado-fundo: #2F4252;
+
+  /* ---- Situação do pagamento ---- */
+  --cor-pagto-pendente: #F5C27A;      --cor-pagto-pendente-fundo: #5A3D0E;
+  --cor-pagto-parcial: #A9D4FF;       --cor-pagto-parcial-fundo: #174A78;
+  --cor-pagto-pago: #8FE3B0;          --cor-pagto-pago-fundo: #0F4B31;
+
+  /* ---- Financeiro: entrada, saída, atraso ---- */
+  --cor-entrada: #8FE3B0;  --cor-entrada-fundo: #0F4B31;
+  --cor-saida: #FFA8A0;    --cor-saida-fundo: #5E1F25;
+  --cor-atraso: #F5C27A;   --cor-atraso-fundo: #5A3D0E;
+  --cor-atrasado-etiqueta: #B3261E;   /* etiqueta "atrasado": texto branco */
+
+  /* ---- Gráficos (o JavaScript lê estas variáveis; claras para ter contraste no fundo escuro) ---- */
+  --cor-grafico-1: #5BB4DA;
+  --cor-grafico-2: #9FE8C9;
+  --cor-categoria-vistoria_cautelar: #5BB4DA;
+  --cor-categoria-regravacao: #9FE8C9;
+  --cor-categoria-capacitacao: #7BD389;
+  --cor-categoria-limpeza: #F2B35E;
+  --cor-categoria-pequenos_reparos: #B79CF0;
+  --cor-variacao-positiva: var(--cor-sucesso);
+  --cor-variacao-negativa: var(--cor-erro);
+  --cor-despesa-1: #5BB4DA; --cor-despesa-2: #9FE8C9; --cor-despesa-3: #F2B35E; --cor-despesa-4: #B79CF0;
+  --cor-despesa-5: #7BD389; --cor-despesa-6: #FF8A80; --cor-despesa-7: #4FD1D9; --cor-despesa-8: #F28C4E;
+  --cor-despesa-9: #8E9BFF; --cor-despesa-10: #B4C0CA; --cor-despesa-11: #C6E76B; --cor-despesa-12: #F58BC0;
+  --cor-forma-dinheiro: #7BD389; --cor-forma-pix: #4FD1D9; --cor-forma-cartao_debito: #5BB4DA;
+  --cor-forma-cartao_credito: #B79CF0; --cor-forma-transferencia: #F2B35E;
+
+  /* ---- Tipografia ---- */
+  --fonte: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --fonte-titulo: "Barlow Condensed", "Arial Narrow", "Inter", system-ui, sans-serif;
+  --texto-xs: 0.75rem;
+  --texto-sm: 0.875rem;
+  --texto-md: 1rem;
+  --texto-lg: 1.125rem;
+  --titulo-3: 1.25rem;
+  --titulo-2: 1.5rem;
+  --titulo-1: clamp(2rem, 1.4rem + 2.6vw, 3.25rem);
+  --numero-grande: clamp(2rem, 1.6rem + 1.6vw, 2.75rem);
+  --altura-linha: 1.55;
+
+  /* ---- Espaçamentos, raios e medidas ---- */
+  --esp-xs: 0.25rem;
+  --esp-sm: 0.5rem;
+  --esp-md: 1rem;
+  --esp-lg: 1.5rem;
+  --esp-xl: 2.5rem;
+  --raio-sm: 8px;
+  --raio: 14px;
+  --raio-lg: 20px;
+  --raio-pilula: 999px;
+  --toque: 2.75rem;                 /* ~44px: área mínima de toque */
+  --largura-menu: 4.75rem;          /* barra lateral estreita (só ícones) */
+  --largura-menu-aberta: 15rem;     /* ao passar o mouse ou focar */
+  --largura-conteudo: 80rem;
+  --anima: 160ms ease;
+}
+
+/* Impressão: o mesmo CSS, com os tokens trocados para fundo branco e texto escuro. */
+@media print {
+  :root {
+    color-scheme: light;
+    --fundo-aplicacao: #fff;
+    --brilho-aqua: none;
+    --vidro-fundo: #fff;
+    --vidro-fundo-solido: #fff;
+    --vidro-denso: #fff;
+    --vidro-borda: #C8D0D6;
+    --vidro-borda-fina: #C8D0D6;
+    --vidro-brilho: none;
+    --vidro-sombra: none;
+    --cor-titulo: #04283A;
+    --cor-texto: #1B2630;
+    --cor-texto-suave: #4A5966;
+    --cor-link: #044464;
+    --cor-borda: #C8D0D6;
+    --cor-superficie: #fff;
+    --cor-superficie-2: #EEF3F6;
+    --cor-superficie-3: #EEF3F6;
+    --cor-campo: #fff;
+    --cor-primaria: #044464;
+    --cor-sucesso: #067647;  --cor-sucesso-fundo: #D1FADF;
+    --cor-erro: #B42318;     --cor-erro-fundo: #FEE4E2;
+    --cor-aviso: #B54708;    --cor-aviso-fundo: #FEF0C7;
+    --cor-info: #175CD3;     --cor-info-fundo: #D1E9FF;
+    --cor-status-solicitado: #475467;   --cor-status-solicitado-fundo: #EAECF0;
+    --cor-status-agendado: #175CD3;     --cor-status-agendado-fundo: #D1E9FF;
+    --cor-status-em_andamento: #B54708; --cor-status-em_andamento-fundo: #FEF0C7;
+    --cor-status-concluido: #067647;    --cor-status-concluido-fundo: #D1FADF;
+    --cor-status-cancelado: #B42318;    --cor-status-cancelado-fundo: #FEE4E2;
+    --cor-agenda-agendado: #175CD3;     --cor-agenda-agendado-fundo: #D1E9FF;
+    --cor-agenda-confirmado: #0E7490;   --cor-agenda-confirmado-fundo: #CFF3F9;
+    --cor-agenda-em_andamento: #B54708; --cor-agenda-em_andamento-fundo: #FEF0C7;
+    --cor-agenda-concluido: #067647;    --cor-agenda-concluido-fundo: #D1FADF;
+    --cor-agenda-cancelado: #B42318;    --cor-agenda-cancelado-fundo: #FEE4E2;
+    --cor-agenda-nao_compareceu: #6941C6; --cor-agenda-nao_compareceu-fundo: #EBE9FE;
+    --cor-agenda-remarcado: #475467;    --cor-agenda-remarcado-fundo: #EAECF0;
+    --cor-pagto-pendente: #B54708;      --cor-pagto-pendente-fundo: #FEF0C7;
+    --cor-pagto-parcial: #175CD3;       --cor-pagto-parcial-fundo: #D1E9FF;
+    --cor-pagto-pago: #067647;          --cor-pagto-pago-fundo: #D1FADF;
+    --cor-entrada: #067647;  --cor-entrada-fundo: #D1FADF;
+    --cor-saida: #B42318;    --cor-saida-fundo: #FEE4E2;
+    --cor-atraso: #B54708;   --cor-atraso-fundo: #FEF0C7;
+  }
+}

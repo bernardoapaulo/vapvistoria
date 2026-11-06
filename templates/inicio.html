@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% load financeiro_extras %}
+{% block titulo %}Início{% endblock %}
+{% block conteudo %}
+  <h1>Bem-vindo(a), {{ user.first_name|default:user.get_username }}!</h1>
+
+  <div class="indicadores">
+    {% if perms.atendimentos.view_atendimento %}<a class="indicador" href="{% url 'atendimento_lista' %}"><strong>{{ total_em_aberto }}</strong>Atendimentos em aberto</a>{% endif %}
+    {% if perms.cadastros.view_cliente %}<a class="indicador" href="{% url 'cliente_lista' %}"><strong>{{ total_clientes }}</strong>Clientes</a>{% endif %}
+    {% if perms.cadastros.view_aluno %}<a class="indicador" href="{% url 'aluno_lista' %}"><strong>{{ total_alunos }}</strong>Alunos</a>{% endif %}
+    {% if perms.cadastros.view_veiculo %}<a class="indicador" href="{% url 'veiculo_lista' %}"><strong>{{ total_veiculos }}</strong>Veículos</a>{% endif %}
+    {% if perms.servicos.view_tiposervico %}<a class="indicador" href="{% url 'servico_lista' %}"><strong>{{ total_servicos }}</strong>Serviços ativos</a>{% endif %}
+  </div>
+
+  {% if resumo_mes %}
+  <div class="cartao">
+    <div class="cabecalho-pagina">
+      <h2>Este mês</h2>
+      <a class="btn btn--secundario btn--pequeno" href="{% url 'dashboard' %}">Abrir dashboard</a>
+    </div>
+    <div class="indicadores">
+      <div class="indicador"><span class="indicador__titulo">Serviços realizados</span><strong>{{ resumo_mes.servicos }}</strong></div>
+      {% if resumo_mes.faturamento is not None %}
+      <div class="indicador"><span class="indicador__titulo">Faturamento</span><strong>R$ {{ resumo_mes.faturamento|floatformat:"2g" }}</strong></div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if resumo_financeiro %}
+  <div class="cartao">
+    <div class="cabecalho-pagina">
+      <h2>Financeiro do mês (caixa)</h2>
+      <a class="btn btn--secundario btn--pequeno" href="{% url 'financeiro' %}">Abrir financeiro</a>
+    </div>
+    <div class="indicadores">
+      <div class="indicador indicador--entrada"><span class="indicador__titulo">Recebido</span><strong>{{ resumo_financeiro.recebido|moeda }}</strong></div>
+      <div class="indicador indicador--saida"><span class="indicador__titulo">Despesas pagas</span><strong>{{ resumo_financeiro.pago|moeda }}</strong></div>
+      <div class="indicador"><span class="indicador__titulo">Resultado</span><strong>{{ resumo_financeiro.resultado|moeda }}</strong></div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if perms.agenda.view_agendamento %}
+  <div class="cartao">
+    <div class="cabecalho-pagina">
+      <h2>Hoje</h2>
+      <div class="acoes">
+        <a class="btn btn--secundario btn--pequeno" href="{% url 'agenda_pendencias' %}">
+          Pendências{% if total_pendencias %} <span class="etiqueta etiqueta--atrasado">{{ total_pendencias }}</span>{% endif %}
+        </a>
+        <a class="btn btn--secundario btn--pequeno" href="{% url 'agenda_calendario' %}">Abrir agenda</a>
+      </div>
+    </div>
+    {% if agenda_hoje %}
+    <ul class="lista-hoje">
+      {% for g in agenda_hoje %}
+      <li>
+        <span class="lista-hoje__hora">{{ g.inicio|date:"H:i" }}–{{ g.fim|date:"H:i" }}</span>
+        <a href="{{ g.get_absolute_url }}"><strong>{{ g.atendimento.cliente.nome }}</strong> — {{ g.atendimento.tipo_servico.nome }}</a>
+        {% include "partials/etiqueta_agendamento.html" %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}<p class="vazio">Nenhum agendamento para hoje.</p>{% endif %}
+  </div>
+  {% endif %}
+
+  {% if perms.atendimentos.view_atendimento %}
+  <div class="cartao">
+    <div class="cabecalho-pagina">
+      <h2>Atendimentos recentes</h2>
+      <a class="btn btn--secundario btn--pequeno" href="{% url 'atendimento_lista' %}">Ver todos</a>
+    </div>
+    {% if recentes %}
+    <div class="tabela-wrap">
+      <table class="responsiva">
+        <thead><tr><th>Data</th><th>Cliente</th><th>Serviço</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          {% for a in recentes %}
+          <tr>
+            <td data-rotulo="Data">{{ a.data_atendimento|date:"d/m/Y" }}</td>
+            <td data-rotulo="Cliente"><strong>{{ a.cliente.nome }}</strong></td>
+            <td data-rotulo="Serviço">{{ a.tipo_servico.nome }}</td>
+            <td data-rotulo="Status">{% include "partials/etiquetas_atendimento.html" %}</td>
+            <td><a class="btn btn--secundario btn--pequeno" href="{{ a.get_absolute_url }}">Ver</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}<p class="vazio">Nenhum atendimento registrado ainda.</p>{% endif %}
+  </div>
+  {% endif %}
+
+  <div class="cartao">
+    <h2>Atalhos</h2>
+    <div class="acoes">
+      {% if perms.atendimentos.add_atendimento %}<a class="btn" href="{% url 'atendimento_novo' %}">Novo atendimento</a>{% endif %}
+      {% if perms.cadastros.add_cliente %}<a class="btn" href="{% url 'cliente_novo' %}">Novo cliente</a>{% endif %}
+      {% if perms.cadastros.add_veiculo %}<a class="btn" href="{% url 'veiculo_novo' %}">Novo veículo</a>{% endif %}
+      {% if perms.cadastros.add_aluno %}<a class="btn" href="{% url 'aluno_novo' %}">Novo aluno</a>{% endif %}
+    </div>
+  </div>
+{% endblock %}

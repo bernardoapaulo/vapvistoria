@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load static %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block conteudo %}
+  <h1>{{ titulo }}</h1>
+  <form method="post" class="cartao" novalidate id="form-atendimento">
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="erro-geral">{{ form.non_field_errors }}</div>{% endif %}
+
+    {% if not form.pode_alterar_valor %}
+      <p class="campo__ajuda">
+        {% if object %}Valor cobrado: <strong>R$ {{ object.valor_cobrado|floatformat:"2g" }}</strong>, desconto: <strong>R$ {{ object.desconto|floatformat:"2g" }}</strong>.
+        {% else %}O valor será o valor padrão do serviço escolhido.{% endif %}
+        Somente administradores alteram valor e desconto.
+      </p>
+    {% endif %}
+
+    {% for campo in form %}
+      {% if not campo.field.disabled %}
+      {# data-campo permite ao JavaScript mostrar/esconder cada campo #}
+      <div class="campo{% if campo.errors %} campo--com-erro{% endif %}" data-campo="{{ campo.name }}">
+        {{ campo.label_tag }}
+        {{ campo }}
+        {% if campo.help_text %}<div class="campo__ajuda">{{ campo.help_text }}</div>{% endif %}
+        {% for erro in campo.errors %}<div class="campo__erro">{{ erro }}</div>{% endfor %}
+      </div>
+      {% endif %}
+    {% endfor %}
+
+    <div class="acoes">
+      <button type="submit" class="btn">Salvar</button>
+      <a class="btn btn--secundario" href="{% if object %}{{ object.get_absolute_url }}{% else %}{{ url_voltar }}{% endif %}">Cancelar</a>
+    </div>
+  </form>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/atendimento_form.js' %}"></script>{% endblock %}

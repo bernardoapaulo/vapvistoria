@@ -1,0 +1,12 @@
+{# Navegação interna do Financeiro. Uso: include com aba="dashboard|receber|pagar|fluxo|recebimentos|despesas|categorias|relatorio|meses" #}
+<nav class="abas nao-imprimir">
+  <a href="{% url 'financeiro' %}" class="{% if aba == 'dashboard' %}ativo{% endif %}">Resumo</a>
+  <a href="{% url 'contas_receber' %}" class="{% if aba == 'receber' %}ativo{% endif %}">A receber</a>
+  <a href="{% url 'contas_pagar' %}" class="{% if aba == 'pagar' %}ativo{% endif %}">A pagar</a>
+  <a href="{% url 'fluxo_caixa' %}" class="{% if aba == 'fluxo' %}ativo{% endif %}">Fluxo de caixa</a>
+  <a href="{% url 'recebimento_lista' %}" class="{% if aba == 'recebimentos' %}ativo{% endif %}">Recebimentos</a>
+  <a href="{% url 'despesa_lista' %}" class="{% if aba == 'despesas' %}ativo{% endif %}">Despesas</a>
+  <a href="{% url 'categoria_despesa_lista' %}" class="{% if aba == 'categorias' %}ativo{% endif %}">Categorias</a>
+  <a href="{% url 'relatorio_mensal' %}" class="{% if aba == 'relatorio' %}ativo{% endif %}">Resultado do mês</a>
+  <a href="{% url 'meses' %}" class="{% if aba == 'meses' %}ativo{% endif %}">Meses</a>
+</nav>

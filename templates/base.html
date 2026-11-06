@@ -1,0 +1,60 @@
+{% load static %}<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <title>{% block titulo %}VAP Vistoria{% endblock %} · VAP Vistoria</title>
+  {% include "partials/cabecalho_html.html" %}
+</head>
+<body>
+  <a class="pular-conteudo" href="#conteudo">Pular para o conteúdo</a>
+
+  <header class="topo-mobile">
+    <a href="{% url 'inicio' %}"><img class="topo-mobile__logo" src="{% static 'img/logo-vap-clara.png' %}" width="600" height="363" alt="VAP Vistoria"></a>
+    <button type="button" class="topo-mobile__botao" data-menu-botao aria-controls="menu" aria-expanded="false" aria-label="Abrir menu">
+      {% include "partials/icone.html" with nome="menu" %}
+    </button>
+  </header>
+  <div class="menu-fundo" data-menu-fundo></div>
+
+  <aside class="menu" id="menu" aria-label="Menu lateral">
+    <a class="menu__marca" href="{% url 'inicio' %}">
+      <img class="menu__logo" src="{% static 'img/logo-vap-clara.png' %}" width="600" height="363" alt="VAP Vistoria — início">
+    </a>
+    <nav class="menu__nav" aria-label="Principal">
+      <a href="{% url 'inicio' %}" title="Início" class="{% if request.path == '/' %}ativo{% endif %}"{% if request.path == '/' %} aria-current="page"{% endif %}>{% include "partials/icone.html" with nome="house" %}<span class="menu__rotulo">Início</span></a>
+      {% if perms.atendimentos.view_atendimento %}<a href="{% url 'dashboard' %}" title="Dashboard" class="{% if '/dashboard/' in request.path %}ativo{% endif %}"{% if '/dashboard/' in request.path %} aria-current="page"{% endif %}>{% include "partials/icone.html" with nome="layout-dashboard" %}<span class="menu__rotulo">Dashboard</span></a>{% endif %}
+      {% if perms.atendimentos.view_atendimento %}<a href="{% url 'atendimento_lista' %}" title="Atendimentos" class="{% if '/atendimentos/' in request.path %}ativo{% endif %}"{% if '/atendimentos/' in request.path %} aria-current="page"{% endif %}>{% include "partials/icone.html" with nome="clipboard-list" %}<span class="menu__rotulo">Atendimentos</span></a>{% endif %}
+      {% if perms.agenda.view_agendamento %}<a href="{% url 'agenda_calendario' %}" title="Agenda" class="{% if '/agenda/' in request.path %}ativo{% endif %}"{% if '/agenda/' in request.path %} aria-current="page"{% endif %}>{% include "partials/icone.html" with nome="calendar-days" %}<span class="menu__rotulo">Agenda</span></a>{% endif %}
+      {% if perms.financeiro.ver_financeiro %}<a href="{% url 'financeiro' %}" title="Financeiro" class="{% if '/financeiro/' in request.path %}ativo{% endif %}"{% if '/financeiro/' in request.path %} aria-current="page"{% endif %}>{% include "partials/icone.html" with nome="wallet" %}<span class="menu__rotulo">Financeiro</span></a>{% endif %}
+      {% if perms.cadastros.view_cliente %}<a href="{% url 'cliente_lista' %}" title="Clientes" class="{% if '/clientes/' in request.path %}ativo{% endif %}"{% if '/clientes/' in request.path %} aria-current="page"{% endif %}>{% include "partials/icone.html" with nome="users" %}<span class="menu__rotulo">Clientes</span></a>{% endif %}
+      {% if perms.cadastros.view_aluno %}<a href="{% url 'aluno_lista' %}" title="Alunos" class="{% if '/alunos/' in request.path %}ativo{% endif %}"{% if '/alunos/' in request.path %} aria-current="page"{% endif %}>{% include "partials/icone.html" with nome="graduation-cap" %}<span class="menu__rotulo">Alunos</span></a>{% endif %}
+      {% if perms.cadastros.view_veiculo %}<a href="{% url 'veiculo_lista' %}" title="Veículos" class="{% if '/veiculos/' in request.path %}ativo{% endif %}"{% if '/veiculos/' in request.path %} aria-current="page"{% endif %}>{% include "partials/icone.html" with nome="car" %}<span class="menu__rotulo">Veículos</span></a>{% endif %}
+      {% if perms.servicos.view_tiposervico %}<a href="{% url 'servico_lista' %}" title="Serviços" class="{% if '/servicos/' in request.path %}ativo{% endif %}"{% if '/servicos/' in request.path %} aria-current="page"{% endif %}>{% include "partials/icone.html" with nome="wrench" %}<span class="menu__rotulo">Serviços</span></a>{% endif %}
+    </nav>
+    <div class="menu__usuario">
+      <span class="menu__avatar" aria-hidden="true">{{ user.get_username|slice:":1" }}</span>
+      <span class="menu__quem"><strong>{{ user.get_username }}</strong><span>{% if perms.financeiro.ver_financeiro %}Administrador{% else %}Funcionário{% endif %}</span></span>
+      <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn--secundario btn--pequeno menu__sair" title="Sair">{% include "partials/icone.html" with nome="log-out" %}<span>Sair</span></button>
+      </form>
+    </div>
+  </aside>
+
+  <main class="conteudo" id="conteudo" tabindex="-1">
+    <div class="conteudo__miolo">
+      <div class="impressao-cabecalho">
+        <img src="{% static 'img/logo-vap.png' %}" width="589" height="330" alt="VAP Vistoria">
+        <span>VAP Vistoria · Gestão interna</span>
+      </div>
+      {% if messages %}
+        <ul class="mensagens" role="status">
+          {% for m in messages %}<li class="mensagem mensagem--{{ m.tags }}">{% if 'success' in m.tags %}{% include "partials/icone.html" with nome="circle-check" %}{% elif 'error' in m.tags %}{% include "partials/icone.html" with nome="circle-x" %}{% elif 'warning' in m.tags %}{% include "partials/icone.html" with nome="triangle-alert" %}{% else %}{% include "partials/icone.html" with nome="info" %}{% endif %}<span>{{ m }}</span></li>{% endfor %}
+        </ul>
+      {% endif %}
+      {% block conteudo %}{% endblock %}
+    </div>
+  </main>
+  <script src="{% static 'js/geral.js' %}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

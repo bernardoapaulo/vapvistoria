@@ -1,0 +1,33 @@
+{# Histórico de atendimentos de um cliente/veículo/aluno.
+   Parâmetros: atendimentos, totais, ocultar_referencia (opcional),
+   novo_param/novo_id (opcional: pré-preenche o formulário, ex.: cliente=7) #}
+{% if novo_param and perms.atendimentos.add_atendimento %}
+  <div class="acoes"><a class="btn btn--secundario btn--pequeno" href="{% url 'atendimento_novo' %}?{{ novo_param }}={{ novo_id }}">Novo atendimento</a></div>
+{% endif %}
+{% if atendimentos %}
+  <div class="resumo-valores">
+    <div><span>Total gasto (sem cancelados)</span><strong>R$ {{ totais.total|floatformat:"2g" }}</strong></div>
+    <div><span>Já pago</span><strong>R$ {{ totais.pago|floatformat:"2g" }}</strong></div>
+    <div><span>Em aberto</span><strong>R$ {{ totais.em_aberto|floatformat:"2g" }}</strong></div>
+  </div>
+  <div class="tabela-wrap">
+    <table class="responsiva">
+      <thead><tr><th>Data</th><th>Serviço</th>{% if not ocultar_referencia %}<th>Referente a</th>{% endif %}<th>Status</th><th>Pagamento</th><th>Valor</th><th></th></tr></thead>
+      <tbody>
+        {% for a in atendimentos %}
+        <tr>
+          <td data-rotulo="Data">{{ a.data_atendimento|date:"d/m/Y" }}</td>
+          <td data-rotulo="Serviço">{{ a.tipo_servico.nome }}</td>
+          {% if not ocultar_referencia %}<td data-rotulo="Referente a">{% if a.veiculo %}{{ a.veiculo.placa }}{% elif a.aluno %}{{ a.aluno.nome }}{% endif %}</td>{% endif %}
+          <td data-rotulo="Status">{% include "partials/etiquetas_atendimento.html" %}</td>
+          <td data-rotulo="Pagamento">{% include "partials/etiqueta_pagamento.html" %}</td>
+          <td data-rotulo="Valor">R$ {{ a.valor_final|floatformat:"2g" }}</td>
+          <td><a class="btn btn--secundario btn--pequeno" href="{{ a.get_absolute_url }}">Ver</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <p class="vazio">Nenhum atendimento registrado ainda.</p>
+{% endif %}

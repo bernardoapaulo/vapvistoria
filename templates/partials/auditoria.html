@@ -1,0 +1,6 @@
+{# Trilha de auditoria. Uso: include com auditoria=<queryset de RegistroAuditoria> #}
+<ul class="auditoria">
+  {% for r in auditoria %}
+    <li><strong>{{ r.acao|capfirst }}</strong>: {{ r.descricao }}<br><small>{{ r.data_hora|date:"d/m/Y H:i" }} · {{ r.usuario.get_username|default:"sistema" }}</small></li>
+  {% empty %}<li class="vazio">Sem registros.</li>{% endfor %}
+</ul>

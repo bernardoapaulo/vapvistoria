@@ -1,0 +1,101 @@
+/* ==========================================================================
+   VAP Vistoria - estilos por módulo: início, agenda (FullCalendar), dashboard e financeiro.
+   Só usa variáveis de tokens.css.
+   ========================================================================== */
+
+/* ---------- Início ---------- */
+.lista-hoje { list-style: none; margin: 0; padding: 0; }
+.lista-hoje li { display: flex; flex-wrap: wrap; gap: var(--esp-sm) var(--esp-md); align-items: center; padding: var(--esp-sm) 0; border-bottom: 1px solid var(--vidro-borda-fina); }
+.lista-hoje li:last-child { border-bottom: 0; }
+.lista-hoje__hora { font-family: var(--fonte-titulo); font-weight: 600; font-size: var(--titulo-3); color: var(--marca-menta); min-width: 6.5rem; }
+
+/* ---------- Agenda: legenda e calendário (FullCalendar lê estas variáveis) ---------- */
+.legenda { list-style: none; display: flex; flex-wrap: wrap; gap: var(--esp-md); margin: var(--esp-md) 0 0; padding: 0; font-size: var(--texto-sm); }
+.legenda__cor { display: inline-block; width: 0.9rem; height: 0.9rem; border-radius: 4px; margin-right: var(--esp-xs); vertical-align: middle; border: 1px solid currentColor; }
+
+.fc {
+  --fc-border-color: var(--cor-borda);
+  --fc-page-bg-color: transparent;
+  --fc-neutral-bg-color: var(--cor-superficie-2);
+  --fc-neutral-text-color: var(--cor-texto-suave);
+  --fc-today-bg-color: rgba(159, 232, 201, 0.12);
+  --fc-now-indicator-color: var(--cor-saida);
+  --fc-non-business-color: rgba(0, 0, 0, 0.18);
+  --fc-list-event-hover-bg-color: var(--cor-superficie-3);
+  --fc-more-link-bg-color: var(--cor-superficie-3);
+  --fc-button-bg-color: var(--cor-superficie-2);
+  --fc-button-border-color: var(--marca-prata);
+  --fc-button-text-color: var(--cor-titulo);
+  --fc-button-hover-bg-color: var(--cor-superficie-3);
+  --fc-button-hover-border-color: var(--cor-titulo);
+  --fc-button-active-bg-color: var(--marca-menta);
+  --fc-button-active-border-color: var(--marca-menta);
+  --fc-event-bg-color: var(--cor-info-fundo);
+  --fc-event-border-color: var(--cor-info);
+  --fc-event-text-color: var(--cor-info);
+  font-family: var(--fonte);
+}
+.fc .fc-toolbar-title { font-family: var(--fonte-titulo); font-weight: 700; font-size: var(--titulo-2); color: var(--cor-titulo); }
+.fc .fc-toolbar-title::first-letter { text-transform: uppercase; }
+.fc .fc-button { border-radius: var(--raio-pilula); min-height: var(--toque); padding: 0 var(--esp-md); font-weight: 600; text-transform: capitalize; }
+.fc .fc-button-primary:not(:disabled).fc-button-active, .fc .fc-button-primary:not(:disabled):active { color: var(--cor-texto-sobre-menta); }
+.fc .fc-button-primary:focus-visible { box-shadow: none; outline: 3px solid var(--cor-foco); outline-offset: 2px; }
+.fc .fc-col-header-cell-cushion, .fc .fc-daygrid-day-number, .fc .fc-list-day-text, .fc .fc-list-day-side-text, .fc .fc-timegrid-slot-label-cushion { color: var(--cor-texto); text-decoration: none; }
+.fc .fc-col-header-cell-cushion { font-size: var(--texto-xs); text-transform: uppercase; letter-spacing: 0.08em; color: var(--marca-prata); }
+.fc .fc-list-day-cushion { background: var(--cor-superficie-2); }
+.fc a { color: inherit; }
+.fc-event-main { overflow: hidden; }
+.fc .fc-event { border-radius: 6px; }
+.fc .evento-status-agendado { --fc-event-bg-color: var(--cor-agenda-agendado-fundo); --fc-event-border-color: var(--cor-agenda-agendado); --fc-event-text-color: var(--cor-agenda-agendado); }
+.fc .evento-status-confirmado { --fc-event-bg-color: var(--cor-agenda-confirmado-fundo); --fc-event-border-color: var(--cor-agenda-confirmado); --fc-event-text-color: var(--cor-agenda-confirmado); }
+.fc .evento-status-em_andamento { --fc-event-bg-color: var(--cor-agenda-em_andamento-fundo); --fc-event-border-color: var(--cor-agenda-em_andamento); --fc-event-text-color: var(--cor-agenda-em_andamento); }
+.fc .evento-status-concluido { --fc-event-bg-color: var(--cor-agenda-concluido-fundo); --fc-event-border-color: var(--cor-agenda-concluido); --fc-event-text-color: var(--cor-agenda-concluido); }
+.fc .evento-status-cancelado { --fc-event-bg-color: var(--cor-agenda-cancelado-fundo); --fc-event-border-color: var(--cor-agenda-cancelado); --fc-event-text-color: var(--cor-agenda-cancelado); text-decoration: line-through; }
+.fc .evento-status-nao_compareceu { --fc-event-bg-color: var(--cor-agenda-nao_compareceu-fundo); --fc-event-border-color: var(--cor-agenda-nao_compareceu); --fc-event-text-color: var(--cor-agenda-nao_compareceu); }
+.fc .evento-status-remarcado { --fc-event-bg-color: var(--cor-agenda-remarcado-fundo); --fc-event-border-color: var(--cor-agenda-remarcado); --fc-event-text-color: var(--cor-agenda-remarcado); }
+.fc .evento-atrasado { --fc-event-border-color: var(--cor-erro); border-style: dashed; }
+
+/* ---------- Dashboard de desempenho ---------- */
+.periodo-info { color: var(--cor-texto-suave); margin: 0 0 var(--esp-md); font-size: var(--texto-sm); }
+.variacao { font-weight: 700; }
+.variacao--positivo { color: var(--cor-variacao-positiva); }
+.variacao--negativo { color: var(--cor-variacao-negativa); }
+.variacao--neutro { color: var(--cor-texto-suave); }
+.graficos { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: var(--esp-md); }
+.graficos .cartao { margin-bottom: 0; min-width: 0; }
+.grafico__cabecalho { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: var(--esp-sm); }
+.grafico__opcao { font-size: var(--texto-sm); color: var(--cor-texto-suave); }
+.grafico__area { position: relative; height: 280px; }  /* Chart.js precisa de um contêiner com altura */
+.definicoes { margin-bottom: var(--esp-md); }
+.definicoes summary { cursor: pointer; font-weight: 600; color: var(--cor-link); min-height: var(--toque); display: flex; align-items: center; }
+.definicoes ul { margin: var(--esp-sm) 0 0; padding-left: var(--esp-lg); font-size: var(--texto-sm); }
+
+/* ---------- Financeiro ---------- */
+.valor--entrada { color: var(--cor-entrada); font-weight: 600; }
+.valor--saida { color: var(--cor-saida); font-weight: 600; }
+.valor--atraso { color: var(--cor-atraso); font-weight: 600; }
+.valor--direita, td.numero, th.numero { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.etiqueta--fin-paga, .etiqueta--fin-valido { background: var(--cor-entrada-fundo); color: var(--cor-entrada); }
+.etiqueta--fin-vencida, .etiqueta--fin-estornado { background: var(--cor-saida-fundo); color: var(--cor-saida); }
+.etiqueta--fin-vence_hoje, .etiqueta--fin-atrasado { background: var(--cor-atraso-fundo); color: var(--cor-atraso); }
+.etiqueta--fin-a_vencer { background: var(--cor-info-fundo); color: var(--cor-info); }
+.estornado td { text-decoration: line-through; color: var(--cor-texto-suave); }
+.estornado td:last-child, .estornado td .etiqueta { text-decoration: none; }
+.faixas { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--esp-md); margin-bottom: var(--esp-lg); }
+.faixa { display: block; padding: var(--esp-md); text-decoration: none; color: var(--cor-texto-suave); border-left: 4px solid var(--marca-azul); }
+a.faixa:hover { border-color: var(--marca-menta); }
+.faixa--atrasada { border-left-color: var(--cor-atraso); }
+.faixa--ativa { background-color: var(--cor-superficie-3); border-color: var(--marca-menta); }
+.faixa span { display: block; font-size: var(--texto-xs); text-transform: uppercase; letter-spacing: 0.06em; color: var(--marca-prata); }
+.faixa strong { font-family: var(--fonte-titulo); font-weight: 600; font-size: var(--titulo-2); color: var(--cor-titulo); }
+.recebimento-rapido { display: flex; flex-wrap: wrap; gap: var(--esp-xs); align-items: flex-end; }
+.recebimento-rapido input, .recebimento-rapido select { width: auto; min-width: 7rem; }
+.aviso--revisar { background: var(--cor-aviso-fundo); border-color: var(--cor-atraso); }
+.tabela-totais td, .tabela-totais th { font-weight: 700; background: var(--cor-superficie-3); }
+.relatorio__secao { margin-bottom: var(--esp-lg); }
+.relatorio__rodape { color: var(--cor-texto-suave); font-size: var(--texto-xs); }
+.mes-fechado { background: var(--cor-saida-fundo); color: var(--cor-saida); }
+.mes-reaberto { background: var(--cor-atraso-fundo); color: var(--cor-atraso); }
+.auditoria { list-style: none; margin: 0; padding: 0; font-size: var(--texto-sm); }
+.auditoria li { padding: var(--esp-xs) 0; border-bottom: 1px solid var(--vidro-borda-fina); }
+.auditoria small { color: var(--cor-texto-suave); }

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block titulo %}Concluir agendamento{% endblock %}
+{% block conteudo %}
+  <h1>Concluir agendamento</h1>
+  <form method="post" class="cartao">
+    {% csrf_token %}
+    <p>{{ object.atendimento.cliente.nome }} — {{ object.atendimento.tipo_servico.nome }}<br>
+      {{ object.inicio|date:"d/m/Y H:i" }}–{{ object.fim|date:"H:i" }}</p>
+
+    {% if pode_concluir_atendimento %}
+      {% if outros_ativos %}
+        <div class="aviso">Este atendimento ainda tem {{ outros_ativos }} outro{{ outros_ativos|pluralize }} agendamento{{ outros_ativos|pluralize }} pendente{{ outros_ativos|pluralize }}.
+          Normalmente o atendimento só é concluído no último.</div>
+      {% endif %}
+      <div class="campo campo--check">
+        <input type="checkbox" id="id_concluir_atendimento" name="concluir_atendimento"{% if marcado %} checked{% endif %}>
+        <label for="id_concluir_atendimento">Concluir também o atendimento #{{ object.atendimento.pk }}</label>
+      </div>
+    {% else %}
+      <p class="campo__ajuda">O atendimento #{{ object.atendimento.pk }} está {{ object.atendimento.get_status_display|lower }} e não será alterado.</p>
+    {% endif %}
+
+    <div class="acoes">
+      <button type="submit" class="btn">Concluir agendamento</button>
+      <a class="btn btn--secundario" href="{{ object.get_absolute_url }}">Voltar</a>
+    </div>
+  </form>
+{% endblock %}

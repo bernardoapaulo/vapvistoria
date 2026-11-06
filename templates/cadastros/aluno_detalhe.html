@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block titulo %}{{ object.nome }}{% endblock %}
+{% block conteudo %}
+  <div class="cabecalho-pagina">
+    <h1>{{ object.nome }}</h1>
+    <div class="acoes">
+      {% if perms.cadastros.change_aluno %}<a class="btn" href="{% url 'aluno_editar' object.pk %}">Editar</a>{% endif %}
+      {% if perms.cadastros.delete_aluno %}<a class="btn btn--perigo" href="{% url 'aluno_excluir' object.pk %}">Excluir</a>{% endif %}
+      <a class="btn btn--secundario" href="{% url 'aluno_lista' %}">Voltar</a>
+    </div>
+  </div>
+
+  <div class="cartao">
+    <h2>Dados do aluno</h2>
+    {% if object.foto %}
+      <img class="foto-aluno" src="{% url 'aluno_documento' object.pk 'foto' %}" alt="Foto de {{ object.nome }}">
+    {% endif %}
+    <dl class="detalhes">
+      <div><dt>CPF</dt><dd>{{ object.cpf_mascarado|default:"—" }}</dd></div>
+      <div><dt>Nascimento</dt><dd>{{ object.data_nascimento|date:"d/m/Y"|default:"—" }}</dd></div>
+      <div><dt>Sexo</dt><dd>{{ object.get_sexo_display|default:"—" }}</dd></div>
+      <div><dt>Celular</dt><dd>{{ object.celular }}</dd></div>
+      <div><dt>E-mail</dt><dd>{{ object.email|default:"—" }}</dd></div>
+      <div><dt>Endereço</dt><dd>{{ object.endereco|default:"—" }}</dd></div>
+      <div><dt>CEP</dt><dd>{{ object.cep|default:"—" }}</dd></div>
+      <div><dt>Cadastrado em</dt><dd>{{ object.data_cadastro|date:"d/m/Y" }}</dd></div>
+      <div><dt>Cliente vinculado</dt><dd>{% if object.cliente %}<a href="{{ object.cliente.get_absolute_url }}">{{ object.cliente.nome }}</a>{% else %}—{% endif %}</dd></div>
+    </dl>
+    {% if object.observacoes %}<h2>Observações</h2><p>{{ object.observacoes|linebreaksbr }}</p>{% endif %}
+  </div>
+
+  {% if perms.atendimentos.view_atendimento %}
+  <div class="cartao">
+    <h2>Cursos e serviços</h2>
+    {% include "partials/historico_servicos.html" with ocultar_referencia=True novo_param="aluno" novo_id=object.pk %}
+  </div>
+  {% endif %}
+
+  <div class="cartao">
+    <h2>Documentos</h2>
+    <ul class="lista-documentos">
+      {% for campo, rotulo, enviado in object.situacao_documentos %}
+        <li>
+          <span>{{ rotulo }}</span>
+          {% if enviado %}
+            <span class="etiqueta etiqueta--ativo">Enviado</span>
+            <a class="btn btn--secundario btn--pequeno" href="{% url 'aluno_documento' object.pk campo %}" target="_blank">Abrir</a>
+          {% else %}
+            <span class="etiqueta etiqueta--inativo">Pendente</span>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endblock %}

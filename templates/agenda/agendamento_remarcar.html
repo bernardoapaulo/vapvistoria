@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load static %}
+{% block titulo %}Remarcar agendamento{% endblock %}
+{% block conteudo %}
+  <h1>Remarcar agendamento</h1>
+  <form method="post" class="cartao" novalidate id="form-agendamento">
+    {% csrf_token %}
+    <p>{{ object.atendimento.cliente.nome }} — {{ object.atendimento.tipo_servico.nome }}<br>
+      Horário atual: <strong>{{ object.inicio|date:"d/m/Y H:i" }}–{{ object.fim|date:"H:i" }}</strong>.
+      O agendamento atual ficará como “Remarcado” e um novo será criado, ligado a ele.</p>
+    {% if form.non_field_errors %}<div class="erro-geral">{{ form.non_field_errors }}</div>{% endif %}
+    {% include "agenda/partials/avisos.html" %}
+    {% for campo in form %}
+      {% if campo.name != "confirmar_conflito" %}
+      <div class="campo{% if campo.errors %} campo--com-erro{% endif %}">
+        {{ campo.label_tag }}{{ campo }}
+        {% if campo.help_text %}<div class="campo__ajuda">{{ campo.help_text }}</div>{% endif %}
+        {% for erro in campo.errors %}<div class="campo__erro">{{ erro }}</div>{% endfor %}
+      </div>
+      {% endif %}
+    {% endfor %}
+    <div class="acoes">
+      <button type="submit" class="btn">Remarcar</button>
+      <a class="btn btn--secundario" href="{{ object.get_absolute_url }}">Cancelar</a>
+    </div>
+  </form>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/agenda_form.js' %}"></script>{% endblock %}

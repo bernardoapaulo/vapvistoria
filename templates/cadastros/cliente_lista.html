@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block titulo %}Clientes{% endblock %}
+{% block conteudo %}
+  <div class="cabecalho-pagina">
+    <h1>Clientes</h1>
+    {% if perms.cadastros.add_cliente %}<a class="btn" href="{% url 'cliente_novo' %}">Novo cliente</a>{% endif %}
+  </div>
+
+  <form method="get" class="busca">
+    <input type="search" name="q" value="{{ termo }}" placeholder="Buscar por nome, telefone, CPF/CNPJ ou e-mail">
+    <button type="submit" class="btn">Buscar</button>
+  </form>
+
+  <div class="cartao tabela-wrap">
+    {% if object_list %}
+    <table class="responsiva">
+      <thead><tr><th>Nome</th><th>Telefone</th><th>Veículos</th><th></th></tr></thead>
+      <tbody>
+        {% for c in object_list %}
+        <tr>
+          <td data-rotulo="Nome"><strong>{{ c.nome }}</strong></td>
+          <td data-rotulo="Telefone">{{ c.telefone }}</td>
+          <td data-rotulo="Veículos">{{ c.qtd_veiculos }}</td>
+          <td><a class="btn btn--secundario btn--pequeno" href="{{ c.get_absolute_url }}">Ver</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="vazio">Nenhum cliente encontrado.</p>
+    {% endif %}
+  </div>
+  {% include "partials/paginacao.html" %}
+{% endblock %}

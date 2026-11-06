@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block titulo %}Alunos{% endblock %}
+{% block conteudo %}
+  <div class="cabecalho-pagina">
+    <h1>Alunos</h1>
+    {% if perms.cadastros.add_aluno %}<a class="btn" href="{% url 'aluno_novo' %}">Novo aluno</a>{% endif %}
+  </div>
+
+  <form method="get" class="busca">
+    <input type="search" name="q" value="{{ termo }}" placeholder="Buscar por nome, CPF, celular ou e-mail">
+    <button type="submit" class="btn">Buscar</button>
+  </form>
+
+  <div class="cartao tabela-wrap">
+    {% if object_list %}
+    <table class="responsiva">
+      <thead><tr><th>Nome</th><th>Celular</th><th></th></tr></thead>
+      <tbody>
+        {% for a in object_list %}
+        <tr>
+          <td data-rotulo="Nome"><strong>{{ a.nome }}</strong></td>
+          <td data-rotulo="Celular">{{ a.celular }}</td>
+          <td><a class="btn btn--secundario btn--pequeno" href="{{ a.get_absolute_url }}">Ver</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="vazio">Nenhum aluno encontrado.</p>
+    {% endif %}
+  </div>
+  {% include "partials/paginacao.html" %}
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load financeiro_extras %}
+{% block titulo %}Estornar recebimento{% endblock %}
+{% block conteudo %}
+  <h1>Estornar recebimento #{{ object.pk }}</h1>
+  <form method="post" class="cartao" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="erro-geral">{{ form.non_field_errors }}</div>{% endif %}
+    <p>Estornar o recebimento de <strong>{{ object.valor|moeda }}</strong> ({{ object.get_forma_display }}, {{ object.data|date:"d/m/Y" }}) do atendimento <a href="{{ object.atendimento.get_absolute_url }}">#{{ object.atendimento.pk }}</a> de {{ object.atendimento.cliente.nome }}.</p>
+    <p class="campo__ajuda">O recebimento continua registrado como estornado (não é apagado), deixa de contar no caixa e a situação do pagamento do atendimento é recalculada.</p>
+    <div class="campo{% if form.motivo.errors %} campo--com-erro{% endif %}">
+      {{ form.motivo.label_tag }}
+      {{ form.motivo }}
+      {% for erro in form.motivo.errors %}<div class="campo__erro">{{ erro }}</div>{% endfor %}
+    </div>
+    <div class="acoes">
+      <button type="submit" class="btn btn--perigo">Sim, estornar</button>
+      <a class="btn btn--secundario" href="{{ object.get_absolute_url }}">Cancelar</a>
+    </div>
+  </form>
+{% endblock %}

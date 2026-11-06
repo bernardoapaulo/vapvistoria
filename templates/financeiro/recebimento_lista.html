@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load financeiro_extras %}
+{% block titulo %}Recebimentos{% endblock %}
+{% block conteudo %}
+  <div class="cabecalho-pagina">
+    <h1>Recebimentos</h1>
+    <a class="btn" href="{% url 'recebimento_novo' %}">Novo recebimento</a>
+  </div>
+  {% include "partials/abas_financeiro.html" with aba="recebimentos" %}
+
+  <form method="get" class="cartao filtros nao-imprimir">
+    <div class="filtros__grade">
+      <div class="campo"><label for="f-q">Busca</label>
+        <input id="f-q" type="search" name="q" value="{{ termo }}" placeholder="Cliente, serviço ou observação"></div>
+      <div class="campo"><label for="id_forma">Forma</label>{{ form.forma }}</div>
+      <div class="campo"><label for="id_situacao">Situação</label>{{ form.situacao }}</div>
+      <div class="campo"><label for="id_cliente">Cliente</label>{{ form.cliente }}</div>
+      <div class="campo"><label for="id_de">De</label>{{ form.de }}</div>
+      <div class="campo"><label for="id_ate">Até</label>{{ form.ate }}</div>
+    </div>
+    <div class="acoes">
+      <button type="submit" class="btn">Filtrar</button>
+      <a class="btn btn--secundario" href="{% url 'recebimento_lista' %}">Limpar</a>
+    </div>
+  </form>
+
+  <p class="periodo-info">Total dos recebimentos válidos do filtro: <strong class="valor--entrada">{{ total|moeda }}</strong></p>
+
+  <div class="cartao tabela-wrap">
+    {% if object_list %}
+    <table class="responsiva">
+      <thead><tr><th>Data</th><th>Cliente</th><th>Serviço</th><th>Forma</th><th class="numero">Valor</th><th>Situação</th><th></th></tr></thead>
+      <tbody>
+        {% for r in object_list %}
+        <tr{% if r.estornado %} class="estornado"{% endif %}>
+          <td data-rotulo="Data">{{ r.data|date:"d/m/Y" }}</td>
+          <td data-rotulo="Cliente"><strong>{{ r.atendimento.cliente.nome }}</strong></td>
+          <td data-rotulo="Serviço"><a href="{{ r.atendimento.get_absolute_url }}">#{{ r.atendimento.pk }} {{ r.atendimento.tipo_servico.nome }}</a></td>
+          <td data-rotulo="Forma">{{ r.get_forma_display }}</td>
+          <td class="numero" data-rotulo="Valor">{{ r.valor|moeda }}</td>
+          <td data-rotulo="Situação">{% if r.estornado %}<span class="etiqueta etiqueta--fin-estornado">Estornado</span>{% else %}<span class="etiqueta etiqueta--fin-valido">Válido</span>{% endif %}</td>
+          <td><a class="btn btn--secundario btn--pequeno" href="{{ r.get_absolute_url }}">Ver</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="vazio">Nenhum recebimento encontrado.</p>
+    {% endif %}
+  </div>
+  {% include "partials/paginacao.html" %}
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block titulo %}Pendências{% endblock %}
+{% block conteudo %}
+  <div class="cabecalho-pagina">
+    <h1>Agenda</h1>
+    {% if perms.agenda.add_agendamento %}<a class="btn" href="{% url 'agendamento_novo' %}">Novo agendamento</a>{% endif %}
+  </div>
+  {% include "partials/abas_agenda.html" with aba="pendencias" %}
+
+  <div class="cartao">
+    <h2>Atrasados <span class="etiqueta etiqueta--atrasado">{{ atrasados|length }}</span></h2>
+    <p class="campo__ajuda">O horário já passou e o agendamento continua Agendado ou Confirmado, sem baixa.</p>
+    {% include "partials/tabela_agendamentos.html" with agendamentos=atrasados vazio="Nenhum agendamento atrasado." %}
+  </div>
+
+  <div class="cartao">
+    <h2>Hoje <span class="etiqueta">{{ hoje|length }}</span></h2>
+    {% include "partials/tabela_agendamentos.html" with agendamentos=hoje vazio="Nada agendado para hoje." %}
+  </div>
+
+  <div class="cartao">
+    <h2>Próximos 7 dias <span class="etiqueta">{{ proximos|length }}</span></h2>
+    {% include "partials/tabela_agendamentos.html" with agendamentos=proximos vazio="Nada agendado para os próximos 7 dias." %}
+  </div>
+
+  <div class="cartao">
+    <h2>Solicitados sem agendamento <span class="etiqueta">{{ sem_agendamento|length }}</span></h2>
+    {% if sem_agendamento %}
+    <div class="tabela-wrap">
+      <table class="responsiva">
+        <thead><tr><th>Data</th><th>Cliente</th><th>Serviço</th><th>Referente a</th><th></th></tr></thead>
+        <tbody>
+          {% for a in sem_agendamento %}
+          <tr>
+            <td data-rotulo="Data">{{ a.data_atendimento|date:"d/m/Y" }}</td>
+            <td data-rotulo="Cliente"><strong>{{ a.cliente.nome }}</strong></td>
+            <td data-rotulo="Serviço">{{ a.tipo_servico.nome }}</td>
+            <td data-rotulo="Referente a">{% if a.veiculo %}{{ a.veiculo.placa }}{% elif a.aluno %}{{ a.aluno.nome }}{% endif %}</td>
+            <td>
+              {% if perms.agenda.add_agendamento %}<a class="btn btn--pequeno" href="{% url 'agendamento_novo' %}?atendimento={{ a.pk }}">Agendar</a>{% endif %}
+              <a class="btn btn--secundario btn--pequeno" href="{{ a.get_absolute_url }}">Ver</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}<p class="vazio">Todos os atendimentos solicitados já têm agendamento.</p>{% endif %}
+  </div>
+{% endblock %}

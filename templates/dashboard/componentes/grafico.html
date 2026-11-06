@@ -1,0 +1,19 @@
+{% comment %}
+  Cartão com gráfico (Chart.js). Uso: include com id (único), titulo, config (dict de graficos.py) e ajuda (opcional).
+  O JavaScript (dashboard.js) desenha todo <canvas data-grafico="id"> a partir do JSON da própria página.
+{% endcomment %}
+<section class="cartao grafico">
+  <div class="grafico__cabecalho">
+    <h2>{{ titulo }}</h2>
+    {% if config.empilhavel and not config.vazio %}
+      <label class="grafico__opcao"><input type="checkbox" data-empilhar="{{ id }}"> Empilhar por categoria</label>
+    {% endif %}
+  </div>
+  {% if ajuda %}<p class="campo__ajuda">{{ ajuda }}</p>{% endif %}
+  {% if config.vazio %}
+    {% include "dashboard/componentes/sem_dados.html" %}
+  {% else %}
+    <div class="grafico__area"><canvas data-grafico="{{ id }}" role="img" aria-label="{{ titulo }}"></canvas></div>
+    {{ config|json_script:id }}
+  {% endif %}
+</section>

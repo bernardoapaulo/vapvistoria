@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% load static %}
+{% block titulo %}Dashboard{% endblock %}
+{% block conteudo %}
+  <div class="cabecalho-pagina">
+    <h1>Dashboard</h1>
+    {% if perms.atendimentos.exportar_dados %}
+      <a class="btn btn--secundario" href="{% url 'dashboard_exportar' %}{% if querystring %}?{{ querystring }}{% endif %}">Baixar CSV do período</a>
+    {% endif %}
+  </div>
+
+  <form method="get" class="cartao filtros" id="filtros-dashboard">
+    <div class="filtros__grade">
+      <div class="campo"><label for="id_periodo">Período</label>{{ form.periodo }}</div>
+      <div class="campo" data-personalizado><label for="id_de">De</label>{{ form.de }}</div>
+      <div class="campo" data-personalizado><label for="id_ate">Até</label>{{ form.ate }}</div>
+      <div class="campo"><label for="id_categoria">Categoria</label>{{ form.categoria }}</div>
+      <div class="campo"><label for="id_responsavel">Responsável</label>{{ form.responsavel }}</div>
+    </div>
+    <div class="acoes">
+      <button type="submit" class="btn">Aplicar</button>
+      <a class="btn btn--secundario" href="{% url 'dashboard' %}">Limpar</a>
+    </div>
+  </form>
+
+  <p class="periodo-info">
+    <strong>{{ periodo.rotulo }}:</strong> {{ periodo.inicio|date:"d/m/Y" }} a {{ periodo.fim|date:"d/m/Y" }}
+    · comparado com {{ periodo.anterior.inicio|date:"d/m/Y" }} a {{ periodo.anterior.fim|date:"d/m/Y" }}
+  </p>
+
+  {% include "dashboard/componentes/definicoes.html" %}
+
+  <h2 class="secao">Serviços realizados</h2>
+  <div class="indicadores">
+    {% include "dashboard/componentes/indicador.html" with titulo="Total de serviços" valor=indicadores.servicos|stringformat:"d" variacao=comparativo.servicos rotulo=periodo.rotulo_comparativo %}
+    {% for c in categorias %}
+      {% include "dashboard/componentes/indicador.html" with titulo=c.rotulo valor=c.valor|stringformat:"d" variacao=c.variacao rotulo=periodo.rotulo_comparativo %}
+    {% endfor %}
+    {% include "dashboard/componentes/indicador.html" with titulo="Alunos atendidos" valor=indicadores.alunos_atendidos|stringformat:"d" nota="Alunos diferentes em capacitações concluídas" %}
+  </div>
+
+  {% if financeiro %}
+  <h2 class="secao">Faturamento</h2>
+  <div class="indicadores">
+    {% include "dashboard/componentes/indicador.html" with titulo="Faturamento" prefixo="R$ " valor=financeiro.faturamento|floatformat:"2g" variacao=financeiro.comparativo.faturamento rotulo=periodo.rotulo_comparativo %}
+    {% include "dashboard/componentes/indicador.html" with titulo="Ticket médio" prefixo="R$ " valor=financeiro.ticket_medio|floatformat:"2g" variacao=financeiro.comparativo.ticket_medio rotulo=periodo.rotulo_comparativo %}
+    {% include "dashboard/componentes/indicador.html" with titulo="A receber" prefixo="R$ " valor=financeiro.a_receber|floatformat:"2g" nota="Atendimentos não cancelados do período" %}
+  </div>
+  {% endif %}
+
+  <h2 class="secao">Operação</h2>
+  <div class="indicadores">
+    {% include "dashboard/componentes/indicador.html" with titulo="Atendimentos em aberto" valor=situacao.em_aberto|stringformat:"d" nota="Hoje, independente do período" %}
+    {% include "dashboard/componentes/indicador.html" with titulo="Agendamentos pendentes" valor=situacao.agendamentos_pendentes|stringformat:"d" nota="Agendados ou confirmados, ainda por vir" %}
+    {% include "dashboard/componentes/indicador.html" with titulo="Agendamentos atrasados" valor=situacao.agendamentos_atrasados|stringformat:"d" nota="Horário passou, sem baixa" %}
+    {% include "dashboard/componentes/indicador.html" with titulo="Taxa de conclusão" valor=indicadores.taxa_conclusao|floatformat:"1" sufixo="%" variacao=comparativo.taxa_conclusao rotulo=periodo.rotulo_comparativo %}
+    {% include "dashboard/componentes/indicador.html" with titulo="Taxa de cancelamento" valor=indicadores.taxa_cancelamento|floatformat:"1" sufixo="%" variacao=comparativo.taxa_cancelamento rotulo=periodo.rotulo_comparativo %}
+    {% include "dashboard/componentes/indicador.html" with titulo="Taxa de não comparecimento" valor=indicadores.taxa_nao_comparecimento|floatformat:"1" sufixo="%" variacao=comparativo.taxa_nao_comparecimento rotulo=periodo.rotulo_comparativo %}
+    {% include "dashboard/componentes/indicador.html" with titulo="Clientes novos" valor=indicadores.clientes_novos|stringformat:"d" variacao=comparativo.clientes_novos rotulo=periodo.rotulo_comparativo %}
+    {% include "dashboard/componentes/indicador.html" with titulo="Clientes recorrentes" valor=indicadores.clientes_recorrentes|stringformat:"d" variacao=comparativo.clientes_recorrentes rotulo=periodo.rotulo_comparativo %}
+  </div>
+
+  <h2 class="secao">Gráficos</h2>
+  <div class="graficos">
+    {% include "dashboard/componentes/grafico.html" with id="g-mensal" titulo="Serviços por mês (12 meses)" config=graficos.mensal %}
+    {% if financeiro %}
+      {% include "dashboard/componentes/grafico.html" with id="g-fat-mensal" titulo="Faturamento por mês (12 meses)" config=financeiro.graficos.mensal %}
+      {% include "dashboard/componentes/grafico.html" with id="g-fat-categoria" titulo="Faturamento por categoria" config=financeiro.graficos.categorias %}
+      {% include "dashboard/componentes/grafico.html" with id="g-pagamentos" titulo="Pagamentos" config=financeiro.graficos.pagamentos ajuda="Proporção de atendimentos pagos, parciais e pendentes no período." %}
+    {% endif %}
+    {% include "dashboard/componentes/grafico.html" with id="g-ranking" titulo="Serviços mais procurados" config=graficos.ranking %}
+    {% include "dashboard/componentes/grafico.html" with id="g-status" titulo="Atendimentos por status" config=graficos.status %}
+    {% include "dashboard/componentes/grafico.html" with id="g-dias" titulo="Agendamentos por dia da semana" config=graficos.dias %}
+    {% include "dashboard/componentes/grafico.html" with id="g-horas" titulo="Agendamentos por horário" config=graficos.horas %}
+  </div>
+
+  <h2 class="secao">Detalhes</h2>
+  <div class="graficos">
+    <section class="cartao">
+      <h2>Serviços mais procurados</h2>
+      {% if financeiro %}{% include "dashboard/tabelas/ranking_com_valores.html" %}{% else %}{% include "dashboard/tabelas/ranking.html" %}{% endif %}
+    </section>
+
+    {% if financeiro %}
+    <section class="cartao">
+      <h2>Top 10 clientes por faturamento</h2>
+      {% if financeiro.top_clientes %}
+      <div class="tabela-wrap"><table class="responsiva">
+        <thead><tr><th>Cliente</th><th>Serviços</th><th>Faturamento</th></tr></thead>
+        <tbody>{% for c in financeiro.top_clientes %}
+          <tr><td data-rotulo="Cliente"><strong>{{ c.nome }}</strong></td><td data-rotulo="Serviços">{{ c.n }}</td><td data-rotulo="Faturamento">R$ {{ c.faturamento|floatformat:"2g" }}</td></tr>
+        {% endfor %}</tbody>
+      </table></div>
+      {% else %}{% include "dashboard/componentes/sem_dados.html" %}{% endif %}
+    </section>
+    {% endif %}
+
+    <section class="cartao">
+      <h2>Serviços por responsável</h2>
+      {% if por_responsavel %}
+      <div class="tabela-wrap"><table class="responsiva">
+        <thead><tr><th>Responsável</th><th>Serviços concluídos</th></tr></thead>
+        <tbody>{% for r in por_responsavel %}
+          <tr><td data-rotulo="Responsável">{{ r.responsavel }}</td><td data-rotulo="Serviços">{{ r.n }}</td></tr>
+        {% endfor %}</tbody>
+      </table></div>
+      {% else %}{% include "dashboard/componentes/sem_dados.html" %}{% endif %}
+    </section>
+
+    <section class="cartao">
+      <h2>Atendimentos em aberto mais antigos</h2>
+      {% if abertos_antigos %}
+      <div class="tabela-wrap"><table class="responsiva">
+        <thead><tr><th>Data</th><th>Cliente</th><th>Serviço</th><th>Status</th><th>Dias</th><th></th></tr></thead>
+        <tbody>{% for item in abertos_antigos %}{% with a=item.atendimento %}
+          <tr>
+            <td data-rotulo="Data">{{ a.data_atendimento|date:"d/m/Y" }}</td>
+            <td data-rotulo="Cliente"><strong>{{ a.cliente.nome }}</strong></td>
+            <td data-rotulo="Serviço">{{ a.tipo_servico.nome }}</td>
+            <td data-rotulo="Status">{% include "partials/etiquetas_atendimento.html" %}</td>
+            <td data-rotulo="Dias">{{ item.dias }}</td>
+            <td><a class="btn btn--secundario btn--pequeno" href="{{ a.get_absolute_url }}">Ver</a></td>
+          </tr>
+        {% endwith %}{% endfor %}</tbody>
+      </table></div>
+      {% else %}<p class="vazio">Nenhum atendimento em aberto.</p>{% endif %}
+    </section>
+  </div>
+{% endblock %}
+{% block scripts %}
+  {# Chart.js 4 (licença MIT) - versão fixa #}
+  <script src="{% static 'vendor/chartjs/chart.umd.min.js' %}"></script>
+  <script src="{% static 'js/dashboard.js' %}"></script>
+{% endblock %}

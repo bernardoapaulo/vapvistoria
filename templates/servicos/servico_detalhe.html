@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block titulo %}{{ object.nome }}{% endblock %}
+{% block conteudo %}
+  <div class="cabecalho-pagina">
+    <h1>{{ object.nome }}</h1>
+    <div class="acoes">
+      {% if perms.servicos.change_tiposervico %}<a class="btn" href="{% url 'servico_editar' object.pk %}">Editar</a>{% endif %}
+      {% if perms.servicos.delete_tiposervico %}<a class="btn btn--perigo" href="{% url 'servico_excluir' object.pk %}">Excluir</a>{% endif %}
+      <a class="btn btn--secundario" href="{% url 'servico_lista' %}">Voltar</a>
+    </div>
+  </div>
+
+  <div class="cartao">
+    <dl class="detalhes">
+      <div><dt>Categoria</dt><dd>{{ object.get_categoria_display }}</dd></div>
+      <div><dt>Valor padrão</dt><dd>R$ {{ object.valor_padrao }}</dd></div>
+      <div><dt>Situação</dt><dd>{% if object.ativo %}<span class="etiqueta etiqueta--ativo">Ativo</span>{% else %}<span class="etiqueta etiqueta--inativo">Inativo</span>{% endif %}</dd></div>
+    </dl>
+  </div>
+{% endblock %}

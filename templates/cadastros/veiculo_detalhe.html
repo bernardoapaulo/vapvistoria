@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block titulo %}{{ object.placa }}{% endblock %}
+{% block conteudo %}
+  <div class="cabecalho-pagina">
+    <h1>{{ object.placa }} · {{ object.marca }} {{ object.modelo }}</h1>
+    <div class="acoes">
+      {% if perms.cadastros.change_veiculo %}<a class="btn" href="{% url 'veiculo_editar' object.pk %}">Editar</a>{% endif %}
+      {% if perms.cadastros.delete_veiculo %}<a class="btn btn--perigo" href="{% url 'veiculo_excluir' object.pk %}">Excluir</a>{% endif %}
+      <a class="btn btn--secundario" href="{% url 'veiculo_lista' %}">Voltar</a>
+    </div>
+  </div>
+
+  <div class="cartao">
+    <h2>Dados do veículo</h2>
+    <dl class="detalhes">
+      <div><dt>Placa</dt><dd>{{ object.placa }}</dd></div>
+      <div><dt>Marca / modelo</dt><dd>{{ object.marca }} {{ object.modelo }}</dd></div>
+      <div><dt>Ano</dt><dd>{{ object.ano }}</dd></div>
+      <div><dt>Cor</dt><dd>{{ object.cor }}</dd></div>
+      <div><dt>Chassi</dt><dd>{{ object.chassi|default:"—" }}</dd></div>
+      <div><dt>Proprietário</dt><dd><a href="{{ object.proprietario.get_absolute_url }}">{{ object.proprietario.nome }}</a></dd></div>
+    </dl>
+    {% if object.observacoes %}<h2>Observações</h2><p>{{ object.observacoes|linebreaksbr }}</p>{% endif %}
+  </div>
+
+  {% if perms.atendimentos.view_atendimento %}
+  <div class="cartao">
+    <h2>Histórico do veículo</h2>
+    {% include "partials/historico_servicos.html" with ocultar_referencia=True novo_param="veiculo" novo_id=object.pk %}
+  </div>
+  {% endif %}
+{% endblock %}

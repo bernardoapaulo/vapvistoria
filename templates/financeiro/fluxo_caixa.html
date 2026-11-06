@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load financeiro_extras %}
+{% block titulo %}Fluxo de caixa{% endblock %}
+{% block conteudo %}
+  <h1>Fluxo de caixa</h1>
+  {% include "partials/abas_financeiro.html" with aba="fluxo" %}
+  {% include "financeiro/filtro_periodo.html" with url=request.path %}
+
+  <section class="cartao">
+    <h2>Entradas e saídas realizadas</h2>
+    <p class="campo__ajuda">Dinheiro que realmente entrou (recebimentos) e saiu (despesas pagas). O saldo acumulado começa em zero no início do período, pois o sistema não guarda saldo de conta.</p>
+    {% if fluxo.linhas %}
+    <div class="tabela-wrap"><table class="responsiva">
+      <thead><tr><th>{% if agrupar == "mes" %}Mês{% else %}Dia{% endif %}</th><th class="numero">Entradas</th><th class="numero">Saídas</th><th class="numero">Saldo</th><th class="numero">Saldo acumulado</th></tr></thead>
+      <tbody>
+        {% for l in fluxo.linhas %}
+        <tr>
+          <td data-rotulo="{% if agrupar == 'mes' %}Mês{% else %}Dia{% endif %}">{% if agrupar == "mes" %}{{ l.data|date:"m/Y" }}{% else %}{{ l.data|date:"d/m/Y" }}{% endif %}</td>
+          <td class="numero" data-rotulo="Entradas"><span class="valor--entrada">{{ l.entradas|moeda }}</span></td>
+          <td class="numero" data-rotulo="Saídas"><span class="valor--saida">{{ l.saidas|moeda }}</span></td>
+          <td class="numero" data-rotulo="Saldo">{{ l.saldo|moeda }}</td>
+          <td class="numero" data-rotulo="Acumulado"><strong>{{ l.acumulado|moeda }}</strong></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot><tr class="tabela-totais"><td>Total</td><td class="numero">{{ fluxo.total_entradas|moeda }}</td><td class="numero">{{ fluxo.total_saidas|moeda }}</td><td class="numero">{{ fluxo.saldo|moeda }}</td><td></td></tr></tfoot>
+    </table></div>
+    {% else %}{% include "dashboard/componentes/sem_dados.html" %}{% endif %}
+  </section>
+
+  <section class="cartao">
+    <h2>Projeção dos próximos 30 dias</h2>
+    <p class="campo__ajuda">Simples: o que está a receber (pela data do atendimento) e a pagar (pelo vencimento). Inclui o que já venceu, na primeira linha.</p>
+    <div class="tabela-wrap"><table class="responsiva">
+      <thead><tr><th>Faixa</th><th class="numero">A receber</th><th class="numero">A pagar</th><th class="numero">Saldo acumulado previsto</th></tr></thead>
+      <tbody>
+        {% for l in projecao.linhas %}
+        <tr>
+          <td data-rotulo="Faixa">{{ l.rotulo }}</td>
+          <td class="numero" data-rotulo="A receber"><span class="valor--entrada">{{ l.entradas|moeda }}</span></td>
+          <td class="numero" data-rotulo="A pagar"><span class="valor--saida">{{ l.saidas|moeda }}</span></td>
+          <td class="numero" data-rotulo="Acumulado"><strong>{{ l.acumulado|moeda }}</strong></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot><tr class="tabela-totais"><td>Saldo previsto em 30 dias</td><td></td><td></td><td class="numero">{{ projecao.saldo_previsto|moeda }}</td></tr></tfoot>
+    </table></div>
+  </section>
+{% endblock %}
+{% block scripts %}
+  {% load static %}
+  <script src="{% static 'js/dashboard.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,7 @@
+{# Cartão de indicador. Uso: include com titulo, valor (texto; vazio mostra "—"), prefixo, sufixo, variacao, rotulo, nota, classe (opcional) #}
+<div class="indicador {{ classe }}">
+  <span class="indicador__titulo">{{ titulo }}</span>
+  <strong>{% if valor %}{{ prefixo }}{{ valor }}{{ sufixo }}{% else %}—{% endif %}</strong>
+  {% if variacao %}<div class="indicador__variacao">{% include "dashboard/componentes/variacao.html" with v=variacao %}</div>{% endif %}
+  {% if nota %}<div class="indicador__nota">{{ nota }}</div>{% endif %}
+</div>

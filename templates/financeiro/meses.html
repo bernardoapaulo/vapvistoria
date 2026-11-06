@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block titulo %}Fechamento de meses{% endblock %}
+{% block conteudo %}
+  <h1>Fechamento de meses</h1>
+  {% include "partials/abas_financeiro.html" with aba="meses" %}
+
+  <div class="cartao">
+    <p>Um <strong>mês fechado</strong> não aceita criar, editar nem estornar recebimentos e despesas com data nele, até ser reaberto. A reabertura fica registrada com o usuário e a data. Só meses que já terminaram podem ser fechados.</p>
+    <div class="tabela-wrap"><table class="responsiva">
+      <thead><tr><th>Mês</th><th>Situação</th><th>Detalhes</th><th></th></tr></thead>
+      <tbody>
+        {% for l in linhas %}
+        <tr>
+          <td data-rotulo="Mês"><strong>{{ l.mes|date:"m/Y" }}</strong></td>
+          <td data-rotulo="Situação">{% if l.fechado %}<span class="etiqueta mes-fechado">Fechado</span>{% elif l.reaberto %}<span class="etiqueta mes-reaberto">Reaberto</span>{% else %}<span class="etiqueta">Aberto</span>{% endif %}</td>
+          <td data-rotulo="Detalhes">
+            {% if l.fechado %}Fechado por {{ l.registro.fechado_por.get_username|default:"—" }} em {{ l.registro.fechado_em|date:"d/m/Y H:i" }}
+            {% elif l.reaberto %}Reaberto por {{ l.registro.reaberto_por.get_username|default:"—" }} em {{ l.registro.reaberto_em|date:"d/m/Y H:i" }}
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            {% if pode_fechar %}
+              {% if l.fechado %}
+                <form method="post" action="{% url 'mes_reabrir' %}" data-confirmar="Reabrir {{ l.mes|date:'m/Y' }}? Lançamentos deste mês voltam a poder ser alterados.">{% csrf_token %}<input type="hidden" name="mes" value="{{ l.mes|date:'Y-m' }}"><button type="submit" class="btn btn--secundario btn--pequeno">Reabrir</button></form>
+              {% elif l.pode_fechar %}
+                <form method="post" action="{% url 'mes_fechar' %}" data-confirmar="Fechar {{ l.mes|date:'m/Y' }}? Não será possível criar, editar nem estornar lançamentos deste mês.">{% csrf_token %}<input type="hidden" name="mes" value="{{ l.mes|date:'Y-m' }}"><button type="submit" class="btn btn--pequeno">Fechar mês</button></form>
+              {% endif %}
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="cartao">
+    <h2>Últimas ações</h2>
+    <ul class="auditoria">
+      {% for r in historico %}<li>{{ r.descricao }}<br><small>{{ r.data_hora|date:"d/m/Y H:i" }} · {{ r.usuario.get_username|default:"sistema" }}</small></li>{% empty %}<li class="vazio">Nenhum mês fechado ou reaberto ainda.</li>{% endfor %}
+    </ul>
+  </div>
+{% endblock %}

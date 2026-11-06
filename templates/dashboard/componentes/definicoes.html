@@ -1,0 +1,20 @@
+{# Texto de ajuda com as definições dos números. Valores em R$ só são explicados a quem os vê. #}
+<details class="cartao definicoes">
+  <summary>Como os números são calculados</summary>
+  <ul>
+    <li><strong>Período:</strong> sempre pela <em>data do atendimento</em>. O comparativo usa o período anterior de mesma duração (mês e ano: o mesmo trecho do mês/ano anterior).</li>
+    <li><strong>Serviço realizado:</strong> atendimento com status <em>Concluído</em>.</li>
+    {% if financeiro %}
+    <li><strong>Faturamento:</strong> soma de (valor cobrado − desconto) dos atendimentos Concluídos. Cancelados nunca entram.</li>
+    <li><strong>Ticket médio:</strong> faturamento ÷ serviços realizados.</li>
+    <li><strong>A receber:</strong> (valor final − valor pago) dos atendimentos não cancelados do período.</li>
+    <li><strong>Faturamento ≠ dinheiro recebido:</strong> aqui o serviço conta quando é <em>concluído</em>, mesmo sem pagamento. O dinheiro que realmente entrou (regime de caixa) está no módulo <a href="{% url 'financeiro' %}">Financeiro</a>, que mostra a diferença entre os dois.</li>
+    {% endif %}
+    <li><strong>Taxa de cancelamento:</strong> cancelados ÷ todos os atendimentos com data no período.</li>
+    <li><strong>Taxa de conclusão:</strong> concluídos ÷ (concluídos + cancelados + em aberto vencidos). “Em aberto vencido” é Solicitado, Agendado ou Em andamento com data já passada.</li>
+    <li><strong>Taxa de não comparecimento:</strong> agendamentos “Não compareceu” ÷ agendamentos do período cujo horário já passou (Cancelados e Remarcados não contam).</li>
+    <li><strong>Cliente novo:</strong> o primeiro atendimento dele (não cancelado) está no período. <strong>Recorrente:</strong> atendeu no período e já tinha atendimento antes.</li>
+    <li><strong>Responsável:</strong> vem dos agendamentos; vale o atendimento que tenha algum agendamento daquela pessoa.</li>
+    <li>Os gráficos de 12 meses ignoram o período escolhido, mas respeitam categoria e responsável.</li>
+  </ul>
+</details>

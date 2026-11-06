@@ -1,0 +1,7 @@
+{# Navegação interna da Agenda. Uso: include com aba="calendario|lista|pendencias|horario" #}
+<nav class="abas">
+  <a href="{% url 'agenda_calendario' %}" class="{% if aba == 'calendario' %}ativo{% endif %}">Calendário</a>
+  <a href="{% url 'agendamento_lista' %}" class="{% if aba == 'lista' %}ativo{% endif %}">Lista</a>
+  <a href="{% url 'agenda_pendencias' %}" class="{% if aba == 'pendencias' %}ativo{% endif %}">Pendências</a>
+  {% if perms.agenda.change_horariofuncionamento %}<a href="{% url 'agenda_horario' %}" class="{% if aba == 'horario' %}ativo{% endif %}">Horário de funcionamento</a>{% endif %}
+</nav>

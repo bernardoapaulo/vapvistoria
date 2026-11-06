@@ -1,0 +1,18 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+.env
+db.sqlite3
+staticfiles/
+.idea/
+.vscode/
+*.log
+media/
+arquivos_privados/
+
+# Local e material de referência (não vai para o GitHub)
+.claude/
+referencias/
+/*.jpg
+static/vendor/**/*.map

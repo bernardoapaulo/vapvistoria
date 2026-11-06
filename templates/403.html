@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block titulo %}Acesso negado{% endblock %}
+{% block conteudo %}
+  <div class="erro-pagina">
+    <p class="erro-pagina__codigo" aria-hidden="true">403</p>
+    <h1>Acesso negado</h1>
+    <div class="cartao">
+      <p>Você não tem permissão para realizar esta ação. Fale com um administrador se precisar de acesso.</p>
+      <a class="btn" href="{% url 'inicio' %}">Voltar ao início</a>
+    </div>
+  </div>
+{% endblock %}

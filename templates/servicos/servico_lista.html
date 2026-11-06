@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block titulo %}Serviços{% endblock %}
+{% block conteudo %}
+  <div class="cabecalho-pagina">
+    <h1>Tipos de serviço</h1>
+    {% if perms.servicos.add_tiposervico %}<a class="btn" href="{% url 'servico_novo' %}">Novo serviço</a>{% endif %}
+  </div>
+
+  <form method="get" class="busca">
+    <input type="search" name="q" value="{{ termo }}" placeholder="Buscar por nome">
+    <select name="categoria">
+      <option value="">Todas as categorias</option>
+      {% for valor, rotulo in categorias %}
+        <option value="{{ valor }}" {% if valor == categoria_atual %}selected{% endif %}>{{ rotulo }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn">Filtrar</button>
+  </form>
+
+  <div class="cartao tabela-wrap">
+    {% if object_list %}
+    <table class="responsiva">
+      <thead><tr><th>Nome</th><th>Categoria</th><th>Valor padrão</th><th>Situação</th><th></th></tr></thead>
+      <tbody>
+        {% for s in object_list %}
+        <tr>
+          <td data-rotulo="Nome"><strong>{{ s.nome }}</strong></td>
+          <td data-rotulo="Categoria">{{ s.get_categoria_display }}</td>
+          <td data-rotulo="Valor">R$ {{ s.valor_padrao }}</td>
+          <td data-rotulo="Situação">{% if s.ativo %}<span class="etiqueta etiqueta--ativo">Ativo</span>{% else %}<span class="etiqueta etiqueta--inativo">Inativo</span>{% endif %}</td>
+          <td><a class="btn btn--secundario btn--pequeno" href="{{ s.get_absolute_url }}">Ver</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="vazio">Nenhum serviço encontrado.</p>
+    {% endif %}
+  </div>
+  {% include "partials/paginacao.html" %}
+{% endblock %}

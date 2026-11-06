@@ -1,0 +1,11 @@
+{# Formulário curto "Marcar como paga". Uso: include com d (despesa), formas e voltar (caminho para onde voltar) #}
+<form method="post" action="{% url 'despesa_pagar' d.pk %}" class="recebimento-rapido">
+  {% csrf_token %}
+  <input type="hidden" name="voltar" value="{{ voltar }}">
+  <select name="forma" aria-label="Forma de pagamento" required>
+    <option value="">Forma...</option>
+    {% for v, r in formas %}<option value="{{ v }}">{{ r }}</option>{% endfor %}
+  </select>
+  <input type="date" name="data" aria-label="Data do pagamento (em branco = hoje)">
+  <button type="submit" class="btn btn--pequeno">Marcar como paga</button>
+</form>

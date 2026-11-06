@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load financeiro_extras %}
+{% block titulo %}Resultado do mês {{ mes|date:"m/Y" }}{% endblock %}
+{% block conteudo %}
+  <div class="cabecalho-pagina nao-imprimir">
+    <h1>Resultado do mês</h1>
+    <div class="acoes">
+      <button type="button" class="btn" onclick="window.print()">Imprimir</button>
+      <a class="btn btn--secundario" href="{% url 'relatorio_csv' %}?mes={{ mes|date:'Y-m' }}">Baixar CSV</a>
+    </div>
+  </div>
+  {% include "partials/abas_financeiro.html" with aba="relatorio" %}
+
+  <form method="get" class="cartao filtros nao-imprimir">
+    <div class="filtros__grade">
+      <div class="campo"><label for="f-mes">Mês</label><input id="f-mes" type="month" name="mes" value="{{ mes|date:'Y-m' }}"></div>
+    </div>
+    <div class="acoes"><button type="submit" class="btn">Ver mês</button></div>
+  </form>
+
+  <article class="relatorio">
+    <header class="relatorio__secao">
+      <h1>VAP Vistoria — Resultado de {{ mes|date:"F \d\e Y" }}</h1>
+      <p class="campo__ajuda">Regime de caixa: dinheiro recebido e despesas pagas dentro do mês.
+        {% if fechado %}<span class="etiqueta mes-fechado">Mês fechado</span>{% else %}<span class="etiqueta">Mês aberto: os números ainda podem mudar</span>{% endif %}</p>
+    </header>
+
+    <section class="cartao relatorio__secao">
+      <h2>Receitas por categoria de serviço</h2>
+      <div class="tabela-wrap"><table>
+        <thead><tr><th>Categoria</th><th class="numero">Recebido</th></tr></thead>
+        <tbody>{% for rotulo, valor in r.receitas %}<tr><td>{{ rotulo }}</td><td class="numero">{{ valor|moeda }}</td></tr>{% endfor %}</tbody>
+        <tfoot><tr class="tabela-totais"><td>Total recebido</td><td class="numero">{{ r.recebido|moeda }}</td></tr></tfoot>
+      </table></div>
+    </section>
+
+    <section class="cartao relatorio__secao">
+      <h2>Despesas pagas por categoria</h2>
+      {% if r.despesas %}
+      <div class="tabela-wrap"><table>
+        <thead><tr><th>Categoria</th><th class="numero">Pago</th></tr></thead>
+        <tbody>{% for nome, valor in r.despesas %}<tr><td>{{ nome }}</td><td class="numero">{{ valor|moeda }}</td></tr>{% endfor %}</tbody>
+        <tfoot><tr class="tabela-totais"><td>Total de despesas pagas</td><td class="numero">{{ r.pago|moeda }}</td></tr></tfoot>
+      </table></div>
+      <p class="campo__ajuda">Diretas (ligadas a um serviço): {{ r.despesas_diretas|moeda }} · Gerais: {{ r.despesas_gerais_pagas|moeda }}.</p>
+      {% else %}<p class="vazio">Nenhuma despesa paga neste mês.</p>{% endif %}
+    </section>
+
+    <section class="cartao relatorio__secao">
+      <h2>Resultado</h2>
+      <div class="resumo-valores">
+        <div><span>Recebido</span><strong class="valor--entrada">{{ r.recebido|moeda }}</strong></div>
+        <div><span>Despesas pagas</span><strong class="valor--saida">{{ r.pago|moeda }}</strong></div>
+        <div><span>Resultado</span><strong>{{ r.resultado|moeda }}</strong></div>
+        <div><span>Margem</span><strong>{{ r.margem|porcento }}</strong></div>
+      </div>
+    </section>
+
+    <section class="cartao relatorio__secao">
+      <h2>Lucro por serviço (competência)</h2>
+      {% if r.margem_servico %}
+      <div class="tabela-wrap"><table>
+        <thead><tr><th>Serviço</th><th class="numero">Faturamento</th><th class="numero">Despesas diretas</th><th class="numero">Lucro</th><th class="numero">Margem</th></tr></thead>
+        <tbody>{% for l in r.margem_servico %}<tr><td>{{ l.nome }}</td><td class="numero">{{ l.receita|moeda }}</td><td class="numero">{{ l.despesas|moeda }}</td><td class="numero">{{ l.lucro|moeda }}</td><td class="numero">{{ l.margem|porcento }}</td></tr>{% endfor %}</tbody>
+      </table></div>
+      {% else %}<p class="vazio">Sem serviços concluídos nem despesas diretas neste mês.</p>{% endif %}
+      <p class="campo__ajuda">Faturamento = serviços concluídos no mês; despesas diretas pelo vencimento. Despesas gerais não são distribuídas.</p>
+    </section>
+
+    <footer class="relatorio__rodape">Gerado em {{ gerado_em|date:"d/m/Y H:i" }} por {{ user.get_username }}.</footer>
+  </article>
+{% endblock %}

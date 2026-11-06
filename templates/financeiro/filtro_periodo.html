@@ -1,0 +1,20 @@
+{# Filtro de período (mesmas opções do dashboard de desempenho). Uso: include com form e url #}
+<form method="get" class="cartao filtros nao-imprimir" id="filtros-dashboard">
+  <div class="filtros__grade">
+    <div class="campo"><label for="id_periodo">Período</label>{{ form.periodo }}</div>
+    <div class="campo" data-personalizado><label for="id_de">De</label>{{ form.de }}</div>
+    <div class="campo" data-personalizado><label for="id_ate">Até</label>{{ form.ate }}</div>
+    {% if agrupar %}
+    <div class="campo"><label for="f-agrupar">Agrupar por</label>
+      <select id="f-agrupar" name="agrupar"><option value="dia" {% if agrupar == "dia" %}selected{% endif %}>Dia</option><option value="mes" {% if agrupar == "mes" %}selected{% endif %}>Mês</option></select></div>
+    {% endif %}
+  </div>
+  <div class="acoes">
+    <button type="submit" class="btn">Aplicar</button>
+    <a class="btn btn--secundario" href="{{ url }}">Limpar</a>
+  </div>
+</form>
+<p class="periodo-info">
+  <strong>{{ periodo.rotulo }}:</strong> {{ periodo.inicio|date:"d/m/Y" }} a {{ periodo.fim|date:"d/m/Y" }}
+  {% if comparar %}· comparado com {{ periodo.anterior.inicio|date:"d/m/Y" }} a {{ periodo.anterior.fim|date:"d/m/Y" }}{% endif %}
+</p>

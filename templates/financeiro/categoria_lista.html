@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block titulo %}Categorias de despesa{% endblock %}
+{% block conteudo %}
+  <div class="cabecalho-pagina">
+    <h1>Categorias de despesa</h1>
+    <a class="btn" href="{% url 'categoria_despesa_novo' %}">Nova categoria</a>
+  </div>
+  {% include "partials/abas_financeiro.html" with aba="categorias" %}
+
+  <div class="cartao tabela-wrap">
+    {% if object_list %}
+    <table class="responsiva">
+      <thead><tr><th>Nome</th><th>Situação</th><th></th></tr></thead>
+      <tbody>
+        {% for c in object_list %}
+        <tr>
+          <td data-rotulo="Nome"><strong>{{ c.nome }}</strong></td>
+          <td data-rotulo="Situação">{% if c.ativa %}<span class="etiqueta etiqueta--ativo">Ativa</span>{% else %}<span class="etiqueta etiqueta--inativo">Inativa</span>{% endif %}</td>
+          <td class="acoes">
+            <a class="btn btn--secundario btn--pequeno" href="{% url 'categoria_despesa_editar' c.pk %}">Editar</a>
+            <a class="btn btn--perigo btn--pequeno" href="{% url 'categoria_despesa_excluir' c.pk %}">Excluir</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<p class="vazio">Nenhuma categoria cadastrada.</p>{% endif %}
+  </div>
+  <p class="campo__ajuda">Categorias com despesas não podem ser excluídas: inative-as para tirar da lista de escolha.</p>
+  {% include "partials/paginacao.html" %}
+{% endblock %}

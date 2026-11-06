@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load static %}
+{% block titulo %}Agenda{% endblock %}
+{% block conteudo %}
+  <div class="cabecalho-pagina">
+    <h1>Agenda</h1>
+    {% if perms.agenda.add_agendamento %}<a class="btn" href="{% url 'agendamento_novo' %}">Novo agendamento</a>{% endif %}
+  </div>
+  {% include "partials/abas_agenda.html" with aba="calendario" %}
+
+  <div class="cartao">
+    {# O JavaScript monta o calendário aqui; os eventos vêm de data-eventos (só serviço, cliente e horário) #}
+    <div id="calendario" data-eventos="{% url 'agenda_eventos' %}"></div>
+    <ul class="legenda">
+      <li><span class="legenda__cor legenda__cor--agendado"></span>Agendado</li>
+      <li><span class="legenda__cor legenda__cor--confirmado"></span>Confirmado</li>
+      <li><span class="legenda__cor legenda__cor--em_andamento"></span>Em andamento</li>
+      <li><span class="legenda__cor legenda__cor--concluido"></span>Concluído</li>
+      <li><span class="legenda__cor legenda__cor--cancelado"></span>Cancelado</li>
+      <li><span class="legenda__cor legenda__cor--nao_compareceu"></span>Não compareceu</li>
+      <li><span class="legenda__cor legenda__cor--remarcado"></span>Remarcado</li>
+    </ul>
+  </div>
+{% endblock %}
+{% block scripts %}
+  {# FullCalendar 6.1.15 (licença MIT), cópia local em static/vendor #}
+  <script src="{% static 'vendor/fullcalendar/index.global.min.js' %}"></script>
+  <script src="{% static 'vendor/fullcalendar/pt-br.global.min.js' %}"></script>
+  <script src="{% static 'js/agenda_calendario.js' %}"></script>
+{% endblock %}

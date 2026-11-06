@@ -1,0 +1,19 @@
+{# Avisos de conflito e de horário fora do expediente + caixa "Salvar mesmo assim". Uso: include com form=<form> #}
+{% if form.tem_avisos %}
+<div class="aviso">
+  <strong>Atenção:</strong>
+  {% if form.aviso_expediente %}<p>{{ form.aviso_expediente }}</p>{% endif %}
+  {% if form.conflitos %}
+    <p>Este horário conflita com {{ form.conflitos|length }} agendamento{{ form.conflitos|length|pluralize }}:</p>
+    <ul>
+      {% for c in form.conflitos %}
+        <li><a href="{{ c.get_absolute_url }}" target="_blank" rel="noopener">{{ c.inicio|date:"d/m H:i" }}–{{ c.fim|date:"H:i" }} · {{ c.atendimento.cliente.nome }} — {{ c.atendimento.tipo_servico.nome }}</a>
+          ({{ c.get_local_display }}{% if c.responsavel %}, responsável {{ c.responsavel.get_username }}{% endif %})</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+  <div class="campo campo--check">
+    {{ form.confirmar_conflito }} <label for="{{ form.confirmar_conflito.id_for_label }}">Salvar mesmo assim</label>
+  </div>
+</div>
+{% endif %}

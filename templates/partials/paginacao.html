@@ -1,0 +1,12 @@
+{# Navegação entre páginas; preserva a busca e os filtros (querystring) #}
+{% if is_paginated %}
+  <nav class="paginacao" aria-label="Paginação">
+    {% if page_obj.has_previous %}
+      <a class="btn btn--secundario btn--pequeno" href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.previous_page_number }}">Anterior</a>
+    {% endif %}
+    <span>Página {{ page_obj.number }} de {{ paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a class="btn btn--secundario btn--pequeno" href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.next_page_number }}">Próxima</a>
+    {% endif %}
+  </nav>
+{% endif %}

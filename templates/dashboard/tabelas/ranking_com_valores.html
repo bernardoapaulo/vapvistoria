@@ -1,0 +1,9 @@
+{# Ranking de serviços COM faturamento (só quem vê valores). Usa "financeiro.ranking". #}
+{% if financeiro.ranking %}
+<div class="tabela-wrap"><table class="responsiva">
+  <thead><tr><th>Serviço</th><th>Realizados</th><th>Faturamento</th></tr></thead>
+  <tbody>{% for s in financeiro.ranking %}
+    <tr><td data-rotulo="Serviço"><strong>{{ s.nome }}</strong></td><td data-rotulo="Realizados">{{ s.n }}</td><td data-rotulo="Faturamento">R$ {{ s.faturamento|floatformat:"2g" }}</td></tr>
+  {% endfor %}</tbody>
+</table></div>
+{% else %}{% include "dashboard/componentes/sem_dados.html" %}{% endif %}

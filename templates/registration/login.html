@@ -1,0 +1,32 @@
+{% load static %}<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <title>Entrar · VAP Vistoria</title>
+  {% include "partials/cabecalho_html.html" %}
+</head>
+<body>
+  <main class="centro">
+    <div class="centro__caixa">
+      <div class="pilula-logo"><img src="{% static 'img/logo-vap.png' %}" width="589" height="330" alt="VAP Vistoria"></div>
+      <h1 class="centro__titulo">Gestão interna</h1>
+      <form method="post" class="cartao">
+        {% csrf_token %}
+        <h2>Entrar</h2>
+        {% if form.errors %}
+          <div class="erro-geral" role="alert">Usuário ou senha incorretos. Tente novamente.</div>
+        {% endif %}
+        <div class="campo">
+          <label for="{{ form.username.id_for_label }}">Usuário</label>
+          {{ form.username }}
+        </div>
+        <div class="campo">
+          <label for="{{ form.password.id_for_label }}">Senha</label>
+          {{ form.password }}
+        </div>
+        <input type="hidden" name="next" value="{{ next }}">
+        <button type="submit" class="btn">Entrar</button>
+      </form>
+    </div>
+  </main>
+</body>
+</html>

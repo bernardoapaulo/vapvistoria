@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block titulo %}Horário de funcionamento{% endblock %}
+{% block conteudo %}
+  <div class="cabecalho-pagina"><h1>Agenda</h1></div>
+  {% include "partials/abas_agenda.html" with aba="horario" %}
+
+  <form method="post" class="cartao" novalidate>
+    {% csrf_token %}
+    <h2>Horário de funcionamento</h2>
+    <p class="campo__ajuda">Agendamentos fora destes horários geram um aviso (não são bloqueados). Horário de Brasília.</p>
+    {{ formset.management_form }}
+    {% if formset.non_form_errors %}<div class="erro-geral">{{ formset.non_form_errors }}</div>{% endif %}
+    <div class="tabela-wrap">
+      <table>
+        <thead><tr><th>Dia</th><th>Funciona</th><th>Abre às</th><th>Fecha às</th></tr></thead>
+        <tbody>
+          {% for form in formset %}
+          <tr>
+            <td><strong>{{ form.instance.get_dia_semana_display }}</strong>{{ form.id }}
+              {% for erro in form.non_field_errors %}<div class="campo__erro">{{ erro }}</div>{% endfor %}</td>
+            <td>{{ form.aberto }}</td>
+            <td>{{ form.abre }}{% for erro in form.abre.errors %}<div class="campo__erro">{{ erro }}</div>{% endfor %}</td>
+            <td>{{ form.fecha }}{% for erro in form.fecha.errors %}<div class="campo__erro">{{ erro }}</div>{% endfor %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="acoes"><button type="submit" class="btn">Salvar</button></div>
+  </form>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load financeiro_extras %}
+{% block titulo %}Contas a receber{% endblock %}
+{% block conteudo %}
+  <div class="cabecalho-pagina">
+    <h1>Contas a receber</h1>
+    <a class="btn" href="{% url 'recebimento_novo' %}">Novo recebimento</a>
+  </div>
+  {% include "partials/abas_financeiro.html" with aba="receber" %}
+
+  <p class="campo__ajuda">Atendimentos não cancelados com saldo em aberto. O vencimento é a data do atendimento; o atraso conta os dias desde então.</p>
+  <div class="faixas">
+    {% for f in faixas %}
+      <a class="faixa {% if f.atrasada and f.valor %}faixa--atrasada{% endif %}" href="?{% if request.GET.cliente %}cliente={{ request.GET.cliente }}&{% endif %}{% if request.GET.de %}de={{ request.GET.de }}&{% endif %}{% if request.GET.ate %}ate={{ request.GET.ate }}&{% endif %}faixa={{ f.chave }}">
+        <span>{{ f.rotulo }} ({{ f.quantidade }})</span><strong>{{ f.valor|moeda }}</strong>
+      </a>
+    {% endfor %}
+    <div class="faixa"><span>Total a receber</span><strong>{{ total|moeda }}</strong></div>
+  </div>
+
+  <form method="get" class="cartao filtros nao-imprimir">
+    <div class="filtros__grade">
+      <div class="campo"><label for="id_cliente">Cliente</label>{{ form.cliente }}</div>
+      <div class="campo"><label for="id_de">De</label>{{ form.de }}</div>
+      <div class="campo"><label for="id_ate">Até</label>{{ form.ate }}</div>
+      <div class="campo"><label for="id_faixa">Atraso</label>{{ form.faixa }}</div>
+    </div>
+    <div class="acoes">
+      <button type="submit" class="btn">Filtrar</button>
+      <a class="btn btn--secundario" href="{% url 'contas_receber' %}">Limpar</a>
+    </div>
+  </form>
+
+  <div class="cartao tabela-wrap">
+    {% if atendimentos %}
+    <table class="responsiva">
+      <thead><tr><th>Data</th><th>Cliente</th><th>Serviço</th><th class="numero">Saldo</th><th>Atraso</th><th>Registrar recebimento</th></tr></thead>
+      <tbody>
+        {% for a in atendimentos %}
+        <tr>
+          <td data-rotulo="Data">{{ a.data_atendimento|date:"d/m/Y" }}</td>
+          <td data-rotulo="Cliente"><strong>{{ a.cliente.nome }}</strong></td>
+          <td data-rotulo="Serviço"><a href="{{ a.get_absolute_url }}">{{ a.tipo_servico.nome }}</a> {% include "partials/etiqueta_pagamento.html" %}</td>
+          <td class="numero" data-rotulo="Saldo"><strong>{{ a.saldo|moeda }}</strong></td>
+          <td data-rotulo="Atraso">{% if a.data_atendimento < hoje %}<span class="etiqueta etiqueta--fin-atrasado">{{ a.dias_de_atraso }} dia{{ a.dias_de_atraso|pluralize }}</span>{% else %}<span class="etiqueta etiqueta--fin-a_vencer">A vencer</span>{% endif %}</td>
+          <td>
+            <form method="post" action="{% url 'atendimento_receber' a.pk %}" class="recebimento-rapido">
+              {% csrf_token %}
+              <input type="hidden" name="voltar" value="{{ request.get_full_path }}">
+              <input type="number" name="valor" step="0.01" min="0.01" max="{{ a.saldo|stringformat:'.2f' }}" value="{{ a.saldo|stringformat:'.2f' }}" aria-label="Valor" required>
+              <select name="forma" aria-label="Forma de pagamento" required>
+                <option value="">Forma...</option>
+                {% for v, r in formas %}<option value="{{ v }}">{{ r }}</option>{% endfor %}
+              </select>
+              <input type="date" name="data" aria-label="Data (em branco = hoje)">
+              <button type="submit" class="btn btn--pequeno">Registrar recebimento</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="vazio">Nenhum atendimento com saldo em aberto{% if request.GET %} para estes filtros{% endif %}.</p>
+    {% endif %}
+  </div>
+  {% include "partials/paginacao.html" %}
+{% endblock %}

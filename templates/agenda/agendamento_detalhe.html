@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block titulo %}Agendamento #{{ object.pk }}{% endblock %}
+{% block conteudo %}
+  <div class="cabecalho-pagina">
+    <h1>Agendamento #{{ object.pk }} {% include "partials/etiqueta_agendamento.html" with g=object %}</h1>
+    <div class="acoes">
+      {% if pode_editar %}<a class="btn" href="{% url 'agendamento_editar' object.pk %}">Editar</a>{% endif %}
+      {% if perms.agenda.delete_agendamento %}<a class="btn btn--perigo" href="{% url 'agendamento_excluir' object.pk %}">Excluir</a>{% endif %}
+      <a class="btn btn--secundario" href="{% url 'agenda_calendario' %}">Voltar à agenda</a>
+    </div>
+  </div>
+
+  {% if conflitos %}
+  <div class="aviso">
+    <strong>Conflito de horário</strong> com:
+    <ul>{% for c in conflitos %}
+      <li><a href="{{ c.get_absolute_url }}">{{ c.inicio|date:"d/m H:i" }}–{{ c.fim|date:"H:i" }} · {{ c.atendimento.cliente.nome }} — {{ c.atendimento.tipo_servico.nome }}</a></li>
+    {% endfor %}</ul>
+  </div>
+  {% endif %}
+
+  {% if acoes or pode_remarcar %}
+  <div class="cartao">
+    <h2>Ações rápidas</h2>
+    <div class="acoes">
+      {% for acao in acoes %}
+        {% if acao.link %}
+          <a class="btn {{ acao.classe }}" href="{{ acao.link }}">{{ acao.rotulo }}</a>
+        {% else %}
+          <form method="post" action="{% url 'agendamento_status' object.pk acao.status %}"{% if acao.confirmar %} data-confirmar="{{ acao.confirmar }}"{% endif %}>
+            {% csrf_token %}
+            <button type="submit" class="btn {{ acao.classe }}">{{ acao.rotulo }}</button>
+          </form>
+        {% endif %}
+      {% endfor %}
+      {% if pode_remarcar %}<a class="btn btn--secundario" href="{% url 'agendamento_remarcar' object.pk %}">Remarcar</a>{% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="cartao">
+    <h2>Dados do agendamento</h2>
+    <dl class="detalhes">
+      <div><dt>Início</dt><dd>{{ object.inicio|date:"d/m/Y H:i" }}</dd></div>
+      <div><dt>Fim</dt><dd>{{ object.fim|date:"d/m/Y H:i" }}</dd></div>
+      <div><dt>Local</dt><dd>{{ object.get_local_display }}{% if object.detalhe_local %} — {{ object.detalhe_local }}{% endif %}</dd></div>
+      <div><dt>Responsável</dt><dd>{{ object.responsavel.get_username|default:"—" }}</dd></div>
+      <div><dt>Cliente</dt><dd><a href="{{ object.atendimento.cliente.get_absolute_url }}">{{ object.atendimento.cliente.nome }}</a></dd></div>
+      <div><dt>Serviço</dt><dd>{{ object.atendimento.tipo_servico.nome }}</dd></div>
+      <div><dt>Atendimento</dt><dd><a href="{{ object.atendimento.get_absolute_url }}">#{{ object.atendimento.pk }}</a> {% include "partials/etiquetas_atendimento.html" with a=object.atendimento %}</dd></div>
+      {% if object.atendimento.veiculo %}<div><dt>Veículo</dt><dd>{{ object.atendimento.veiculo.placa }}</dd></div>{% endif %}
+      {% if object.atendimento.aluno %}<div><dt>Aluno</dt><dd>{{ object.atendimento.aluno.nome }}</dd></div>{% endif %}
+      <div><dt>Criado por</dt><dd>{{ object.criado_por.get_username|default:"—" }} em {{ object.criado_em|date:"d/m/Y H:i" }}</dd></div>
+      <div><dt>Última alteração</dt><dd>{{ object.atualizado_em|date:"d/m/Y H:i" }}</dd></div>
+    </dl>
+    {% if object.observacoes %}<h2>Observações</h2><p>{{ object.observacoes|linebreaksbr }}</p>{% endif %}
+    {% if object.remarcado_de %}<p>Remarcado a partir de <a href="{{ object.remarcado_de.get_absolute_url }}">{{ object.remarcado_de.inicio|date:"d/m/Y H:i" }}</a>.</p>{% endif %}
+    {% for r in remarcacoes %}<p>Remarcado para <a href="{{ r.get_absolute_url }}">{{ r.inicio|date:"d/m/Y H:i" }}</a>.</p>{% endfor %}
+  </div>
+{% endblock %}

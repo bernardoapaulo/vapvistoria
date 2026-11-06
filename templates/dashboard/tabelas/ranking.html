@@ -1,0 +1,9 @@
+{# Ranking de serviços SEM valores (perfil operacional). Usa a variável "ranking". #}
+{% if ranking %}
+<div class="tabela-wrap"><table class="responsiva">
+  <thead><tr><th>Serviço</th><th>Realizados</th></tr></thead>
+  <tbody>{% for s in ranking %}
+    <tr><td data-rotulo="Serviço"><strong>{{ s.nome }}</strong></td><td data-rotulo="Realizados">{{ s.n }}</td></tr>
+  {% endfor %}</tbody>
+</table></div>
+{% else %}{% include "dashboard/componentes/sem_dados.html" %}{% endif %}

@@ -1,0 +1,23 @@
+{# Tabela de agendamentos. Uso: include com agendamentos=<queryset com select_related> #}
+{% if agendamentos %}
+<div class="tabela-wrap">
+  <table class="responsiva">
+    <thead><tr><th>Quando</th><th>Cliente</th><th>Serviço</th><th>Local</th><th>Responsável</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      {% for g in agendamentos %}
+      <tr>
+        <td data-rotulo="Quando">{{ g.inicio|date:"d/m/Y H:i" }}–{{ g.fim|date:"H:i" }}</td>
+        <td data-rotulo="Cliente"><strong>{{ g.atendimento.cliente.nome }}</strong></td>
+        <td data-rotulo="Serviço">{{ g.atendimento.tipo_servico.nome }}</td>
+        <td data-rotulo="Local">{{ g.get_local_display }}</td>
+        <td data-rotulo="Responsável">{{ g.responsavel.get_username|default:"—" }}</td>
+        <td data-rotulo="Status">{% include "partials/etiqueta_agendamento.html" %}</td>
+        <td><a class="btn btn--secundario btn--pequeno" href="{{ g.get_absolute_url }}">Ver</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+  <p class="vazio">{{ vazio|default:"Nenhum agendamento." }}</p>
+{% endif %}

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block titulo %}Veículos{% endblock %}
+{% block conteudo %}
+  <div class="cabecalho-pagina">
+    <h1>Veículos</h1>
+    {% if perms.cadastros.add_veiculo %}<a class="btn" href="{% url 'veiculo_novo' %}">Novo veículo</a>{% endif %}
+  </div>
+
+  <form method="get" class="busca">
+    <input type="search" name="q" value="{{ termo }}" placeholder="Buscar por placa, marca, modelo ou proprietário">
+    <button type="submit" class="btn">Buscar</button>
+  </form>
+
+  <div class="cartao tabela-wrap">
+    {% if object_list %}
+    <table class="responsiva">
+      <thead><tr><th>Placa</th><th>Veículo</th><th>Proprietário</th><th></th></tr></thead>
+      <tbody>
+        {% for v in object_list %}
+        <tr>
+          <td data-rotulo="Placa"><strong>{{ v.placa }}</strong></td>
+          <td data-rotulo="Veículo">{{ v.marca }} {{ v.modelo }}</td>
+          <td data-rotulo="Proprietário">{{ v.proprietario.nome }}</td>
+          <td><a class="btn btn--secundario btn--pequeno" href="{{ v.get_absolute_url }}">Ver</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="vazio">Nenhum veículo encontrado.</p>
+    {% endif %}
+  </div>
+  {% include "partials/paginacao.html" %}
+{% endblock %}
