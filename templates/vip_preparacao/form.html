@@ -51,25 +51,38 @@
       {% include "vip_preparacao/campo.html" with campo=form.ano %}
       {% include "vip_preparacao/campo.html" with campo=form.chassi ajuda="17 letras e números, sem I, O e Q (opcional)." %}
 
-      {# Serviço: pop-up com os serviços ativos, busca e valor padrão #}
-      <div class="campo campo--larga{% if form.servico.errors %} campo--com-erro{% endif %}" data-servico-campo>
-        <label for="{{ form.servico.id_for_label }}">{{ form.servico.label }} <span aria-hidden="true">*</span></label>
-        {{ form.servico }}
-        {% if not form.concluido %}
-        <button type="button" class="seletor-botao seletor-botao--vazio" data-abrir-dialogo="dialogo-servico" hidden aria-haspopup="dialog" data-servico-botao>
-          <span data-servico-texto>Escolher o serviço</span>{% include "partials/icone.html" with nome="chevron-down" %}
-        </button>
-        {% endif %}
-        {% for erro in form.servico.errors %}<div class="campo__erro">{{ erro }}</div>{% endfor %}
-      </div>
-
       {% include "vip_preparacao/campo.html" with campo=form.data_preparacao ajuda="Data de entrada do veículo." %}
       {% include "vip_preparacao/campo.html" with campo=form.data_vip ajuda="Data da lavagem/VIP." %}
       {% include "vip_preparacao/campo.html" with campo=form.data_devolucao %}
-      {% include "vip_preparacao/campo.html" with campo=form.valor ajuda=form.valor_travado|yesno:"Preenchido pelo serviço. Só o Administrador altera o valor.,Preenchido pelo serviço; você pode ajustar." %}
       {% include "vip_preparacao/campo.html" with campo=form.previsao_pagamento ajuda="Só uma previsão: não entra nos recebimentos nem no caixa." %}
       {% include "vip_preparacao/campo.html" with campo=form.nota_fiscal %}
     </div>
+
+    {# Serviços: um ou mais itens; o pop-up permite marcar vários de uma vez #}
+    <h2 class="secao-form">Serviços <span aria-hidden="true">*</span></h2>
+    {% if itens_travados %}
+      <p class="campo__ajuda">Registro concluído: os serviços e valores ficam travados. Para alterar, reabra o registro.</p>
+      <div class="tabela-wrap"><table>
+        <thead><tr><th>Serviço</th><th>Observação</th><th class="numero">Valor</th></tr></thead>
+        <tbody>{% for i in itens_atuais %}<tr><td>{{ i.servico.nome }}</td><td>{{ i.observacao|default:"—" }}</td><td class="numero">R$ {{ i.valor|floatformat:"2g" }}</td></tr>{% endfor %}</tbody>
+        <tfoot class="tabela-totais"><tr><th colspan="2">Total</th><th class="numero">R$ {{ object.valor|floatformat:"2g" }}</th></tr></tfoot>
+      </table></div>
+    {% else %}
+      <div data-itens-campo>
+        {{ itens.management_form }}
+        {% for erro in itens.non_form_errors %}<div class="erro-geral" role="alert">{{ erro }}</div>{% endfor %}
+        <p class="campo__ajuda">Marque os serviços no pop-up. Para repetir um serviço, abra o pop-up e marque-o de novo.
+          {% if not pode_alterar_valor %}Os valores vêm do serviço; só o Administrador os altera.{% endif %}</p>
+        <ul class="itens" data-itens-lista>
+          {% for f in itens.forms %}{% include "vip_preparacao/item_linha.html" %}{% endfor %}
+        </ul>
+        <template data-item-modelo>{% with f=itens.empty_form %}{% include "vip_preparacao/item_linha.html" %}{% endwith %}</template>
+        <div class="itens__rodape">
+          <button type="button" class="btn btn--secundario" data-abrir-dialogo="dialogo-servico" aria-haspopup="dialog" data-servicos-abrir hidden>{% include "partials/icone.html" with nome="plus" %}Adicionar serviços</button>
+          <p class="itens__total">Total: <strong data-itens-total aria-live="polite">R$ 0,00</strong></p>
+        </div>
+      </div>
+    {% endif %}
 
     <h2 class="secao-form">Fotos de entrada</h2>
     <p class="campo__ajuda">Opcionais. No celular, toque no campo para tirar a foto na hora ou escolher da galeria. As fotos são reduzidas e perdem a localização (GPS) ao serem salvas.</p>
@@ -103,10 +116,10 @@
     <p class="campo__ajuda">Escolhendo "Outra", descreva a cor no campo que aparece.</p>
   </dialog>
 
-  {# Pop-up de serviço #}
+  {# Pop-up de serviços: caixas de seleção, busca e valor padrão #}
   <dialog class="dialogo" id="dialogo-servico" aria-labelledby="dialogo-servico-titulo">
     <div class="dialogo__cabecalho">
-      <h2 id="dialogo-servico-titulo">Serviço</h2>
+      <h2 id="dialogo-servico-titulo">Serviços</h2>
       <button type="button" class="btn btn--fantasma btn--pequeno" data-fechar-dialogo aria-label="Fechar">{% include "partials/icone.html" with nome="x" %}</button>
     </div>
     <div class="campo">
@@ -115,12 +128,17 @@
     </div>
     <ul class="lista-servicos">
       {% for s in servicos_modal %}
-      <li><button type="button" data-servico-opcao="{{ s.pk }}" data-nome="{{ s.nome }}" data-valor="{{ s.valor_padrao|stringformat:'s' }}" aria-pressed="false">
-        <span>{{ s.nome }}<br><small>{{ s.get_categoria_display }}</small></span><strong>R$ {{ s.valor_padrao|floatformat:"2g" }}</strong></button></li>
+      <li><label class="servico-opcao">
+        <input type="checkbox" data-servico-opcao="{{ s.pk }}" data-nome="{{ s.nome }}" data-valor="{{ s.valor_padrao|stringformat:'s' }}">
+        <span>{{ s.nome }}<br><small>{{ s.get_categoria_display }}</small></span><strong>R$ {{ s.valor_padrao|floatformat:"2g" }}</strong></label></li>
       {% empty %}
       <li class="vazio">Nenhum serviço ativo cadastrado. Cadastre em Serviços.</li>
       {% endfor %}
     </ul>
+    <div class="acoes">
+      <button type="button" class="btn" data-servicos-confirmar>Adicionar selecionados</button>
+      <button type="button" class="btn btn--secundario" data-fechar-dialogo>Cancelar</button>
+    </div>
   </dialog>
 {% endblock %}
 {% block scripts %}

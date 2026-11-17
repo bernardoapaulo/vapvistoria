@@ -72,7 +72,7 @@ class ListagemAtendimentoTest(BaseAtendimentoTest):
     def test_listagem_usa_poucas_consultas(self):
         for _ in range(10):
             self.criar()
-        with self.assertNumQueries(7):
+        with self.assertNumQueries(8):   # 7 da listagem + 1 do perfil (grupos) que a central de acesso lê
             self.client.get(reverse("atendimento_lista"))
 
     def test_historico_na_tela_do_cliente_veiculo_e_aluno(self):

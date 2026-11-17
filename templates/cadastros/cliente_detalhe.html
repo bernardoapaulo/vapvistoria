@@ -22,7 +22,7 @@
     {% if object.observacoes %}<h2>Observações</h2><p>{{ object.observacoes|linebreaksbr }}</p>{% endif %}
   </div>
 
-  {% if perms.agenda.view_agendamento %}
+  {% if modulos.agenda and perms.agenda.view_agendamento %}
   <div class="cartao">
     <h2>Próximo agendamento</h2>
     {% if proximo_agendamento %}
@@ -37,7 +37,7 @@
   <div class="cartao">
     <div class="cabecalho-pagina">
       <h2>Veículos</h2>
-      {% if perms.cadastros.add_veiculo %}<a class="btn btn--secundario btn--pequeno" href="{% url 'veiculo_novo' %}?cliente={{ object.pk }}">Adicionar veículo</a>{% endif %}
+      {% if modulos.veiculos and perms.cadastros.add_veiculo %}<a class="btn btn--secundario btn--pequeno" href="{% url 'veiculo_novo' %}?cliente={{ object.pk }}">Adicionar veículo</a>{% endif %}
     </div>
     {% if veiculos %}
     <div class="tabela-wrap">
@@ -50,7 +50,7 @@
             <td data-rotulo="Veículo">{{ v.marca }} {{ v.modelo }}</td>
             <td data-rotulo="Ano">{{ v.ano }}</td>
             <td data-rotulo="Cor">{{ v.cor }}</td>
-            <td><a class="btn btn--secundario btn--pequeno" href="{{ v.get_absolute_url }}">Ver</a></td>
+            <td>{% if modulos.veiculos %}<a class="btn btn--secundario btn--pequeno" href="{{ v.get_absolute_url }}">Ver</a>{% endif %}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -61,13 +61,40 @@
     {% endif %}
   </div>
 
-  {% if perms.atendimentos.view_atendimento %}
+  {% if modulos.atendimentos and perms.atendimentos.view_atendimento %}
   <div class="cartao">
     <div class="cabecalho-pagina">
       <h2>Histórico de serviços</h2>
       <a class="btn btn--secundario btn--pequeno" href="{% url 'atendimento_lista' %}?cliente={{ object.pk }}">Ver todos os atendimentos</a>
     </div>
     {% include "partials/historico_servicos.html" with novo_param="cliente" novo_id=object.pk %}
+  </div>
+  {% endif %}
+{% if registros_vip is not None and perms.vip_preparacao.view_registrovip and modulos.vip %}
+  <div class="cartao">
+    <div class="cabecalho-pagina">
+      <h2>Vip/Preparação</h2>
+      <a class="btn btn--secundario btn--pequeno" href="{% url 'vip_lista' %}?cliente={{ object.pk }}&amp;status=todos">Ver todos</a>
+    </div>
+    {% if registros_vip %}
+    <div class="tabela-wrap">
+      <table class="responsiva">
+        <thead><tr><th>Placa</th><th>Serviços</th><th>Etapa</th><th>Preparação</th>{% if modulos.financeiro %}<th class="numero">Valor</th>{% endif %}<th></th></tr></thead>
+        <tbody>
+          {% for r in registros_vip %}
+          <tr>
+            <td data-rotulo="Placa"><strong>{{ r.placa }}</strong></td>
+            <td data-rotulo="Serviços">{{ r.servicos_texto }}</td>
+            <td data-rotulo="Etapa">{% include "vip_preparacao/etiqueta_etapa.html" %}</td>
+            <td data-rotulo="Preparação">{{ r.data_preparacao|date:"d/m/Y" }}</td>
+            {% if modulos.financeiro %}<td data-rotulo="Valor" class="numero">R$ {{ r.valor|floatformat:"2g" }}</td>{% endif %}
+            <td><a class="btn btn--secundario btn--pequeno" href="{{ r.get_absolute_url }}">Ver</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}<p class="vazio">Nenhum registro de Vip/Preparação para este cliente.</p>{% endif %}
   </div>
   {% endif %}
 {% endblock %}

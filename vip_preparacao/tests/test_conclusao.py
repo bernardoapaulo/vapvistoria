@@ -24,13 +24,13 @@ class ConclusaoTest(BaseVipTest):
     def test_concluir_cria_um_atendimento_e_um_recebimento_com_os_valores_certos(self):
         r = self.registro(data_devolucao=self.dias(-2), valor=Decimal("150.00"))
         resposta = self.concluir(r, forma="cartao_credito")
-        self.assertContains(resposta, "Registro concluído e recebimento lançado")
+        self.assertContains(resposta, "Registro concluído e recebimentos lançados")
         r.refresh_from_db()
         self.assertEqual((r.status, r.concluido_por), ("concluido", self.admin))
         self.assertIsNotNone(r.concluido_em)
 
         self.assertEqual(Atendimento.objects.count(), 1)
-        a = r.atendimento
+        a = r.itens.get().atendimento
         self.assertEqual((a.cliente, a.tipo_servico, a.status), (self.cliente, self.vip, "concluido"))
         self.assertEqual((a.valor_cobrado, a.desconto, a.valor_final), (Decimal("150.00"), Decimal("0.00"), Decimal("150.00")))
         self.assertEqual(a.data_atendimento, self.dias(-2))              # data de devolução
@@ -45,7 +45,7 @@ class ConclusaoTest(BaseVipTest):
         r = self.registro()
         self.concluir(r, data=self.dias(-1).isoformat())
         r.refresh_from_db()
-        self.assertEqual(r.atendimento.data_atendimento, self.dias(-1))
+        self.assertEqual(r.itens.get().atendimento.data_atendimento, self.dias(-1))
 
     def test_cria_o_veiculo_se_a_placa_nao_existe(self):
         r = self.registro(placa="NEW1A23", marca="Kia", modelo="Sportage", versao="EX", ano=2020, cor="outra", cor_outra="Grafite")
@@ -53,7 +53,7 @@ class ConclusaoTest(BaseVipTest):
         v = Veiculo.objects.get(placa="NEW1A23")
         self.assertEqual((v.proprietario, v.marca, v.modelo, v.ano, v.cor), (self.cliente, "Kia", "Sportage EX", 2020, "Grafite"))
         r.refresh_from_db()
-        self.assertEqual(r.atendimento.veiculo, v)
+        self.assertEqual(r.itens.get().atendimento.veiculo, v)
 
     def test_placa_ja_cadastrada_em_outro_cliente_nao_bloqueia_nem_muda_o_dono(self):
         """Um cliente pode ter vários carros e o carro não fica preso ao cliente do registro."""
@@ -63,7 +63,7 @@ class ConclusaoTest(BaseVipTest):
         self.veiculo_outro.refresh_from_db()
         self.assertEqual(self.veiculo_outro.proprietario, self.outro_cliente)     # dono intocado
         r.refresh_from_db()
-        self.assertEqual(r.atendimento.veiculo, self.veiculo_outro)
+        self.assertEqual(r.itens.get().atendimento.veiculo, self.veiculo_outro)
         self.assertEqual(Veiculo.objects.filter(placa=self.veiculo_outro.placa).count(), 1)
 
     def test_concluir_exige_marca_modelo_ano_e_cor(self):
@@ -126,9 +126,9 @@ class IdempotenciaTest(BaseVipTest):
         r = self.registro()
         self.concluir(r)
         r.refresh_from_db()
-        outro = self.registro(placa="OUT1A23")
+        outro = self.registro(placa="OUT1A23").itens.get()
         from django.db import IntegrityError, transaction
-        outro.atendimento = r.atendimento
+        outro.atendimento = r.itens.get().atendimento
         with self.assertRaises(IntegrityError), transaction.atomic():
             outro.save()
 
@@ -173,7 +173,7 @@ class ReaberturaTest(BaseVipTest):
         (rec,) = Recebimento.objects.all()            # nunca apagado em silêncio
         self.assertIsNotNone(rec.estornado_em)
         self.assertIn(f"Reabertura do registro VIP/Preparação #{r.pk}", rec.motivo_estorno)
-        a = r.atendimento
+        a = r.itens.get().atendimento
         a.refresh_from_db()
         self.assertEqual((a.status, a.situacao_pagamento, a.valor_pago), ("em_andamento", "pendente", Decimal("0.00")))
         self.assertEqual(r.historico.filter(tipo="reabertura").count(), 1)
@@ -188,7 +188,7 @@ class ReaberturaTest(BaseVipTest):
         r.refresh_from_db()
         self.assertEqual(Atendimento.objects.count(), 1)
         self.assertEqual((Recebimento.objects.count(), Recebimento.objects.validos().count()), (2, 1))
-        self.assertEqual((r.valor, r.atendimento.valor_pago, r.atendimento.status), (Decimal("140.00"), Decimal("140.00"), "concluido"))
+        self.assertEqual((r.valor, r.itens.get().atendimento.valor_pago, r.itens.get().atendimento.status), (Decimal("140.00"), Decimal("140.00"), "concluido"))
 
     def test_nao_reabre_o_que_nao_esta_concluido(self):
         r = self.registro()
@@ -201,7 +201,7 @@ class ValorNaConclusaoTest(BaseVipTest):
         r = self.registro(valor=Decimal("150.00"))
         self.concluir(r, usuario=self.func, valor="1.00")
         r.refresh_from_db()
-        self.assertEqual((r.valor, r.atendimento.valor_cobrado), (Decimal("150.00"), Decimal("150.00")))
+        self.assertEqual((r.valor, r.itens.get().atendimento.valor_cobrado), (Decimal("150.00"), Decimal("150.00")))
         self.assertEqual(Recebimento.objects.get().criado_por, self.func)
 
     def test_administrador_altera_o_valor_e_isso_fica_no_historico(self):
@@ -209,4 +209,4 @@ class ValorNaConclusaoTest(BaseVipTest):
         self.concluir(r, valor="120.00")
         r.refresh_from_db()
         self.assertEqual((r.valor, Recebimento.objects.get().valor), (Decimal("120.00"), Decimal("120.00")))
-        self.assertIn("valor alterado de R$ 150,00", r.historico.get(tipo="conclusao").valor_novo)
+        self.assertIn("total alterado de R$ 150,00", r.historico.get(tipo="conclusao").valor_novo)

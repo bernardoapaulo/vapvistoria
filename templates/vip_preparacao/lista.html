@@ -49,14 +49,16 @@
   <div class="cartao tabela-wrap">
     {% if object_list %}
     <table class="responsiva">
-      <thead><tr><th>Placa</th><th>Veículo</th><th>Cliente</th><th>Serviço</th><th>Etapa</th><th>Preparação</th><th>VIP</th><th>Devolução</th><th class="numero">Valor</th><th>Status</th><th></th></tr></thead>
+      <thead><tr><th>Placa</th><th>Veículo</th><th>Cliente</th><th>Serviços</th><th>Etapa</th><th>Preparação</th><th>VIP</th><th>Devolução</th><th class="numero">Valor</th><th>Status</th><th></th></tr></thead>
       <tbody>
         {% for r in object_list %}
         <tr{% if r.atrasado %} class="linha--atrasada"{% endif %}>
           <td data-rotulo="Placa"><a class="placa" href="{{ r.get_absolute_url }}">{{ r.placa }}</a></td>
           <td data-rotulo="Veículo">{{ r.veiculo_texto|default:"—" }}</td>
           <td data-rotulo="Cliente"><strong>{{ r.cliente.nome }}</strong></td>
-          <td data-rotulo="Serviço">{{ r.servico.nome }}</td>
+          <td data-rotulo="Serviços">{% with itens=r.lista_itens %}{% if itens|length == 1 %}{{ itens.0.servico.nome }}{% elif itens %}
+            <details class="servicos-resumo"><summary title="{{ r.servicos_texto }}">{{ itens.0.servico.nome }} +{{ itens|length|add:"-1" }}</summary>
+              <ul>{% for i in itens %}<li>{{ i.servico.nome }}</li>{% endfor %}</ul></details>{% endif %}{% endwith %}</td>
           <td data-rotulo="Etapa">{% include "vip_preparacao/etiqueta_etapa.html" %}</td>
           <td data-rotulo="Preparação">{{ r.data_preparacao|date:"d/m/Y" }}</td>
           <td data-rotulo="VIP">{{ r.data_vip|date:"d/m/Y"|default:"—" }}</td>
@@ -66,7 +68,7 @@
           <td>
             <div class="acoes acoes--linha">
               {% if pode_concluir and not r.concluido %}
-                <button type="button" class="btn btn--pequeno" data-concluir data-url="{% url 'vip_concluir' r.pk %}" data-placa="{{ r.placa }}" data-valor="{{ r.valor|unlocalize }}">Marcar como concluído</button>
+                <button type="button" class="btn btn--pequeno" data-concluir data-url="{% url 'vip_concluir' r.pk %}" data-placa="{{ r.placa }}" data-valor="{{ r.valor|unlocalize }}" data-itens="{{ r.itens_json }}">Marcar como concluído</button>
               {% endif %}
               <a class="btn btn--secundario btn--pequeno" href="{{ r.get_absolute_url }}">Ver detalhes</a>
               {% if pode_editar %}<a class="btn btn--secundario btn--pequeno" href="{% url 'vip_editar' r.pk %}">Editar</a>{% endif %}

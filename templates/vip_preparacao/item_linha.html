@@ -1,0 +1,22 @@
+{# Uma linha de serviço do formulário. Uso: include com f=<form do item> (também usada, com empty_form, como modelo do JavaScript). #}
+<li class="item-servico{% if f.errors %} item-servico--com-erro{% endif %}" data-item>
+  {{ f.id }}
+  <span class="so-leitor">{{ f.DELETE }}</span>
+  <div class="item-servico__servico">
+    <label for="{{ f.servico.id_for_label }}">Serviço</label>
+    {{ f.servico }}
+    <strong class="item-servico__nome" data-item-nome hidden></strong>
+    {% for erro in f.servico.errors %}<div class="campo__erro">{{ erro }}</div>{% endfor %}
+  </div>
+  <div class="item-servico__valor">
+    <label for="{{ f.valor.id_for_label }}">Valor (R$)</label>
+    {{ f.valor }}
+    {% for erro in f.valor.errors %}<div class="campo__erro">{{ erro }}</div>{% endfor %}
+  </div>
+  <div class="item-servico__obs">
+    <label for="{{ f.observacao.id_for_label }}">Observação</label>
+    {{ f.observacao }}
+    {% for erro in f.observacao.errors %}<div class="campo__erro">{{ erro }}</div>{% endfor %}
+  </div>
+  <button type="button" class="btn btn--secundario btn--pequeno item-servico__remover" data-item-remover>{% include "partials/icone.html" with nome="trash-2" %}<span>Remover</span></button>
+</li>

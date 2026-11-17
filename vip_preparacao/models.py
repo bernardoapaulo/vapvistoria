@@ -89,15 +89,14 @@ class RegistroVip(Auditavel):
         "ano", null=True, blank=True, validators=[MinValueValidator(1950, "Informe um ano a partir de 1950.")])
     chassi = models.CharField("chassi", max_length=17, blank=True, validators=[validar_chassi])
 
-    servico = models.ForeignKey(
-        TipoServico, verbose_name="serviço", on_delete=models.PROTECT, related_name="registros_vip")
     data_preparacao = models.DateField("data de preparação")
     data_vip = models.DateField("data VIP", null=True, blank=True)
     data_devolucao = models.DateField("data de devolução", null=True, blank=True)
 
-    # Copiado do serviço ao criar e guardado aqui: mudar o valor padrão do serviço não altera o passado.
+    # Total dos itens de serviço (calculado: quem grava é regras.recalcular_total, no padrão do valor_pago do
+    # Atendimento). Guardado para a lista poder filtrar e ordenar por valor sem somar a cada linha.
     valor = models.DecimalField(
-        "valor (R$)", max_digits=10, decimal_places=2,
+        "valor total (R$)", max_digits=10, decimal_places=2, default=ZERO, editable=False,
         validators=[MinValueValidator(ZERO, "O valor não pode ser negativo.")])
     previsao_pagamento = models.DateField("previsão de pagamento", null=True, blank=True)
     nota_fiscal = models.CharField("nota fiscal", max_length=40, blank=True)
@@ -108,10 +107,6 @@ class RegistroVip(Auditavel):
     concluido_por = models.ForeignKey(
         settings.AUTH_USER_MODEL, verbose_name="concluído por", null=True, blank=True,
         on_delete=models.SET_NULL, related_name="+", editable=False)
-    # Atendimento (e, por ele, o Recebimento) gerado na conclusão. Fica ligado mesmo se o registro for reaberto.
-    atendimento = models.OneToOneField(
-        Atendimento, verbose_name="atendimento gerado", null=True, blank=True, editable=False,
-        on_delete=models.PROTECT, related_name="registro_vip")
 
     objects = RegistroVipQuerySet.as_manager()
 
@@ -137,6 +132,31 @@ class RegistroVip(Auditavel):
     @property
     def concluido(self):
         return self.status == self.Status.CONCLUIDO
+
+    @property
+    def lista_itens(self):
+        """Itens já carregados (use prefetch_related("itens__servico") nas listagens)."""
+        return list(self.itens.all())
+
+    @property
+    def total_itens(self):
+        return sum((i.valor for i in self.lista_itens), ZERO)
+
+    @property
+    def servicos_texto(self):
+        nomes = [i.servico.nome for i in self.lista_itens]
+        return " + ".join(nomes)
+
+    @property
+    def itens_json(self):
+        """Para o pop-up de conclusão (data-itens): [{nome, valor}] com ponto decimal."""
+        import json
+        return json.dumps([{"nome": i.servico.nome, "valor": str(i.valor)} for i in self.lista_itens])
+
+    @property
+    def atendimentos(self):
+        """Atendimentos gerados na conclusão (um por item)."""
+        return Atendimento.objects.filter(item_vip__registro=self)
 
     @property
     def cor_texto(self):
@@ -197,6 +217,31 @@ class RegistroVip(Auditavel):
         super().save(*args, **kwargs)
 
 
+class ItemServicoVip(models.Model):
+    """Um serviço do registro. O mesmo serviço pode aparecer mais de uma vez (cada linha é um item)."""
+
+    registro = models.ForeignKey(RegistroVip, on_delete=models.CASCADE, related_name="itens")
+    servico = models.ForeignKey(
+        TipoServico, verbose_name="serviço", on_delete=models.PROTECT, related_name="itens_vip")
+    # Copiado do serviço ao incluir o item e guardado aqui: mudar o valor padrão depois não altera o passado.
+    valor = models.DecimalField(
+        "valor (R$)", max_digits=10, decimal_places=2,
+        validators=[MinValueValidator(ZERO, "O valor não pode ser negativo.")])
+    observacao = models.CharField("observação", max_length=120, blank=True)
+    # Atendimento concluído gerado para este item na conclusão (cada item vira um atendimento).
+    atendimento = models.OneToOneField(
+        Atendimento, verbose_name="atendimento gerado", null=True, blank=True, editable=False,
+        on_delete=models.PROTECT, related_name="item_vip")
+
+    class Meta:
+        verbose_name = "item de serviço VIP/Preparação"
+        verbose_name_plural = "itens de serviço VIP/Preparação"
+        ordering = ["id"]
+
+    def __str__(self):
+        return f"{self.servico} ({self.valor})"
+
+
 class FotoVip(models.Model):
     class Momento(models.TextChoices):
         ENTRADA = "entrada", "Entrada"
@@ -244,6 +289,7 @@ class HistoricoVip(models.Model):
         CONCLUSAO = "conclusao", "Conclusão"
         REABERTURA = "reabertura", "Reabertura"
         FOTOS = "fotos", "Fotos"
+        ITENS = "itens", "Serviços"
 
     registro = models.ForeignKey(RegistroVip, on_delete=models.CASCADE, related_name="historico")
     tipo = models.CharField("tipo", max_length=12, choices=Tipo.choices)

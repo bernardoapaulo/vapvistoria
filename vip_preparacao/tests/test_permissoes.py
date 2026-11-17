@@ -33,7 +33,7 @@ class AcessoTest(BaseVipTest):
     def test_item_no_menu_para_os_dois_perfis(self):
         for usuario in (self.admin, self.func):
             self.client.force_login(usuario)
-            self.assertContains(self.client.get(reverse("inicio")), reverse("vip_lista"))
+            self.assertContains(self.client.get(reverse("inicio"), follow=True), reverse("vip_lista"))
 
     def test_funcionario_continua_sem_acesso_ao_financeiro(self):
         self.client.force_login(self.func)
@@ -48,7 +48,7 @@ class FuncionarioTest(BaseVipTest):
         self.assertEqual(self.criar_pelo_form(usuario=self.func, placa="FUN1A23").status_code, 302)
         r = RegistroVip.objects.get(placa="FUN1A23")
         self.assertEqual(r.criado_por, self.func)
-        self.client.post(reverse("vip_editar", args=[r.pk]), self.dados_form(placa="FUN1A23", observacao="ok"))
+        self.client.post(reverse("vip_editar", args=[r.pk]), self.dados_form(registro=r, placa="FUN1A23", observacao="ok"))
         self.assertEqual(RegistroVip.objects.get().observacao, "ok")
         self.concluir(r, usuario=self.func)
         self.assertEqual(RegistroVip.objects.get().status, "concluido")
@@ -76,7 +76,7 @@ class FuncionarioTest(BaseVipTest):
         for usuario in (self.admin, self.func):
             self.client.force_login(usuario)
             resposta = self.client.post(reverse("vip_excluir", args=[r.pk]), follow=True)
-            self.assertContains(resposta, "já gerou um atendimento")
+            self.assertContains(resposta, "já foi concluído alguma vez")
             self.assertEqual(RegistroVip.objects.count(), 1)
 
     def test_exclusao_apaga_as_fotos_do_armazenamento(self):
@@ -117,15 +117,18 @@ class RegistroConcluidoTest(BaseVipTest):
         self.r = self.registro(valor=Decimal("150.00"))
         self.concluir(self.r)
 
-    def test_administrador_edita_mas_cliente_servico_e_valor_ficam_travados(self):
+    def test_administrador_edita_mas_cliente_servicos_e_valores_ficam_travados(self):
         self.client.force_login(self.admin)
         resposta = self.client.get(reverse("vip_editar", args=[self.r.pk]))
         self.assertContains(resposta, "Registro concluído.")
-        dados = self.dados_form(placa=self.r.placa, valor="1.00", servico=self.preparacao.pk, cliente=self.outro_cliente.pk,
-                                observacao="ajuste")
+        self.assertContains(resposta, "os serviços e valores ficam travados")
+        dados = self.dados_form(registro=self.r, placa=self.r.placa, cliente=self.outro_cliente.pk, observacao="ajuste")
+        dados["itens-0-valor"], dados["itens-0-servico"] = "1.00", self.preparacao.pk     # tentativa de mexer nos itens
         self.client.post(reverse("vip_editar", args=[self.r.pk]), dados)
         self.r.refresh_from_db()
-        self.assertEqual((self.r.observacao, self.r.valor, self.r.servico, self.r.cliente), ("ajuste", Decimal("150.00"), self.vip, self.cliente))
+        item = self.r.itens.get()
+        self.assertEqual((self.r.observacao, self.r.valor, item.servico, item.valor, self.r.cliente),
+                         ("ajuste", Decimal("150.00"), self.vip, Decimal("150.00"), self.cliente))
 
     def test_funcionario_so_acrescenta_fotos_de_saida(self):
         self.client.force_login(self.func)

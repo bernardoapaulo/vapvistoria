@@ -14,6 +14,7 @@
     <dl class="detalhes">
       <div><dt>Categoria</dt><dd>{{ object.get_categoria_display }}</dd></div>
       <div><dt>Valor padrão</dt><dd>R$ {{ object.valor_padrao }}</dd></div>
+      {% if object.criado_por %}<div><dt>Cadastrado por</dt><dd>{{ object.criado_por.get_username }}</dd></div>{% endif %}
       <div><dt>Situação</dt><dd>{% if object.ativo %}<span class="etiqueta etiqueta--ativo">Ativo</span>{% else %}<span class="etiqueta etiqueta--inativo">Inativo</span>{% endif %}</dd></div>
     </dl>
   </div>

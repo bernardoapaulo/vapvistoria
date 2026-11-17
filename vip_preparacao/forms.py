@@ -1,5 +1,6 @@
 from django import forms
 from django.db import transaction
+from django.forms import BaseInlineFormSet, inlineformset_factory
 from django.db.models import Q
 from django.utils import timezone
 
@@ -8,7 +9,7 @@ from financeiro.models import FormaPagamento
 from servicos.models import TipoServico
 
 from . import fotos, regras
-from .models import Cor, FotoVip, RegistroVip
+from .models import Cor, FotoVip, ItemServicoVip, RegistroVip
 
 Posicao = FotoVip.Posicao
 Momento = FotoVip.Momento
@@ -83,9 +84,8 @@ class RegistroVipForm(_FotosMixin, forms.ModelForm):
     class Meta:
         model = RegistroVip
         fields = [
-            "cliente", "placa", "marca", "modelo", "versao", "cor", "cor_outra", "ano", "chassi", "servico",
-            "data_preparacao", "data_vip", "data_devolucao", "valor", "previsao_pagamento", "nota_fiscal",
-            "observacao",
+            "cliente", "placa", "marca", "modelo", "versao", "cor", "cor_outra", "ano", "chassi",
+            "data_preparacao", "data_vip", "data_devolucao", "previsao_pagamento", "nota_fiscal", "observacao",
         ]
         widgets = {
             "data_preparacao": _DataInput(), "data_vip": _DataInput(), "data_devolucao": _DataInput(),
@@ -98,12 +98,10 @@ class RegistroVipForm(_FotosMixin, forms.ModelForm):
         error_messages = {
             "cliente": {"required": "Selecione o cliente."},
             "placa": {"required": "Informe a placa do veículo."},
-            "servico": {"required": "Selecione o serviço."},
             "data_preparacao": {"required": "Informe a data de preparação (entrada do veículo).", "invalid": "Data inválida."},
             "data_vip": {"invalid": "Data inválida."},
             "data_devolucao": {"invalid": "Data inválida."},
             "previsao_pagamento": {"invalid": "Data inválida."},
-            "valor": {"invalid": "Informe um valor válido, por exemplo 150.00."},
             "ano": {"invalid": "Informe um ano válido, por exemplo 2018."},
         }
 
@@ -113,26 +111,18 @@ class RegistroVipForm(_FotosMixin, forms.ModelForm):
         self.pode_alterar_valor = usuario.has_perm("vip_preparacao.alterar_valor_vip")
         atual = self.instance if self.instance.pk else None
         self._antes = regras.estado(atual) if atual else None
-        self._servico_antes = atual.servico_id if atual else None
         self.concluido = bool(atual and atual.concluido)
 
         self.fields["cliente"].queryset = Cliente.objects.order_by("nome")
-        self.fields["servico"].queryset = servicos_disponiveis(self._servico_antes)
-        self.fields["servico"].label_from_instance = lambda s: f"{s.nome} — R$ {s.valor_padrao}"
         self.fields["cor"].choices = [("", "Selecione...")] + list(Cor.choices)
         self.fields["cor_outra"].label = "Descreva a cor"
         if not atual:
             self.fields["data_preparacao"].initial = timezone.localdate()
 
-        # Valor: só o Administrador altera; depois de concluído, só reabrindo. O servidor ignora o que vier.
-        # Cliente e serviço também ficam travados depois de concluído (já geraram atendimento e recebimento).
-        self.valor_travado = not self.pode_alterar_valor or self.concluido
-        self.fields["valor"].required = False       # em branco = valor padrão do serviço (preenchido em clean)
-        if self.valor_travado:
-            self.fields["valor"].disabled = True
+        # O cliente fica travado depois de concluído (já gerou atendimentos e recebimentos); os itens de serviço
+        # e seus valores também (ver ItemServicoForm). Para alterar, é preciso reabrir.
         if self.concluido:
-            for nome in ("cliente", "servico"):
-                self.fields[nome].disabled = True
+            self.fields["cliente"].disabled = True
         self._criar_campos_foto()
 
     def clean_ano(self):
@@ -143,15 +133,6 @@ class RegistroVipForm(_FotosMixin, forms.ModelForm):
 
     def clean(self):
         dados = super().clean()
-        servico = dados.get("servico")
-        if self.valor_travado and servico:
-            # novo registro, ou serviço trocado: vale o valor padrão do serviço; senão mantém o do registro
-            if self.instance.pk and servico.pk == self._servico_antes:
-                dados["valor"] = self.instance.valor
-            else:
-                dados["valor"] = servico.valor_padrao
-        elif dados.get("valor") is None and servico and not self.errors.get("valor"):
-            dados["valor"] = servico.valor_padrao   # administrador deixou em branco
         self._processar_fotos()
         return dados
 
@@ -162,7 +143,8 @@ class RegistroVipForm(_FotosMixin, forms.ModelForm):
         return RegistroVip.objects.filter(nota_fiscal__iexact=nota).exclude(pk=self.instance.pk).exists()
 
     @transaction.atomic
-    def salvar(self):
+    def salvar(self, itens=None):
+        """Grava o registro, os itens de serviço (lista de dicionários do formset) e as fotos, tudo junto."""
         novo = self.instance.pk is None
         r = self.save(commit=False)
         if novo:
@@ -170,12 +152,71 @@ class RegistroVipForm(_FotosMixin, forms.ModelForm):
         r.alterado_por = self.usuario
         r.nota_fiscal = (r.nota_fiscal or "").strip()
         r.save()
+        if itens is not None:
+            regras.salvar_itens(r, itens, self.usuario, registrar=not novo)
         if novo:
             regras.registrar_criacao(r, self.usuario)
         else:
             regras.registrar_edicao(r, self._antes, self.usuario)
         regras.salvar_fotos(r, self.fotos_novas, self.fotos_remover, self.usuario)
         return r
+
+
+class ItemServicoForm(forms.ModelForm):
+    """Uma linha de serviço. O valor padrão vem do serviço; só o Administrador o altera."""
+
+    class Meta:
+        model = ItemServicoVip
+        fields = ["servico", "valor", "observacao"]
+        widgets = {"valor": forms.NumberInput(attrs={"step": "0.01", "min": "0", "inputmode": "decimal"}),
+                   "observacao": forms.TextInput(attrs={"maxlength": 120})}
+        error_messages = {"servico": {"required": "Selecione o serviço."},
+                          "valor": {"invalid": "Informe um valor válido, por exemplo 150.00."}}
+
+    def __init__(self, *args, pode_alterar_valor=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._servico_antes = self.instance.servico_id if self.instance.pk else None
+        self.fields["servico"].queryset = servicos_disponiveis(self._servico_antes)
+        self.fields["servico"].label_from_instance = lambda s: f"{s.nome} — R$ {s.valor_padrao}"
+        self.fields["valor"].required = False        # em branco = valor padrão do serviço
+        self.valor_travado = not pode_alterar_valor
+        if self.valor_travado:
+            self.fields["valor"].disabled = True     # o servidor ignora qualquer valor enviado
+
+    def clean(self):
+        dados = super().clean()
+        servico = dados.get("servico")
+        if servico and (self.valor_travado or dados.get("valor") is None):
+            if self.valor_travado and self.instance.pk and servico.pk == self._servico_antes:
+                dados["valor"] = self.instance.valor      # item que já existia: mantém o combinado
+            else:
+                dados["valor"] = servico.valor_padrao     # item novo ou serviço trocado
+        return dados
+
+
+class BaseItensFormSet(BaseInlineFormSet):
+    def clean(self):
+        super().clean()
+        vivos = [f for f in self.forms
+                 if f.cleaned_data and not f.cleaned_data.get("DELETE") and f.cleaned_data.get("servico")]
+        if not vivos and not any(f.errors for f in self.forms):
+            raise forms.ValidationError("Informe pelo menos 1 serviço.")
+
+    def itens_validados(self):
+        """[{id, servico, valor, observacao, remover}] na ordem da tela."""
+        saida = []
+        for f in self.forms:
+            c = f.cleaned_data
+            if not c or not c.get("servico"):
+                continue
+            saida.append({"id": f.instance.pk, "servico": c["servico"], "valor": c["valor"],
+                          "observacao": (c.get("observacao") or "").strip(), "remover": bool(c.get("DELETE"))})
+        return saida
+
+
+ItensFormSet = inlineformset_factory(
+    RegistroVip, ItemServicoVip, form=ItemServicoForm, formset=BaseItensFormSet,
+    extra=0, can_delete=True, max_num=30, validate_max=True)
 
 
 class FotosSaidaForm(_FotosMixin, forms.Form):
@@ -205,7 +246,7 @@ class FotosSaidaForm(_FotosMixin, forms.Form):
 
 class ConcluirVipForm(forms.Form):
     valor = forms.DecimalField(
-        label="Valor recebido (R$)", max_digits=10, decimal_places=2, min_value=0,
+        label="Valor total recebido (R$)", max_digits=10, decimal_places=2, min_value=0,
         error_messages={"invalid": "Informe um valor válido, por exemplo 150.00."})
     forma = forms.ChoiceField(label="Forma de pagamento", choices=[("", "Selecione...")] + list(FormaPagamento.choices),
                               error_messages={"required": "Informe a forma de pagamento."})

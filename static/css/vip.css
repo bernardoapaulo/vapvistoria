@@ -27,6 +27,32 @@ tr.linha--atrasada td:first-child { box-shadow: inset 4px 0 0 var(--cor-saida); 
 .secao-form { margin: var(--esp-lg) 0 var(--esp-md); padding-bottom: var(--esp-sm); border-bottom: 1px solid var(--cor-borda); }
 .nota-preenchimento { color: var(--marca-menta); font-size: var(--texto-sm); margin-top: var(--esp-xs); }
 
+/* Serviços do registro (linhas com valor, observação e remover) */
+.itens { list-style: none; margin: 0 0 var(--esp-md); padding: 0; display: grid; gap: var(--esp-sm); }
+.item-servico {
+  display: grid; grid-template-columns: minmax(10rem, 2fr) minmax(7rem, 1fr) minmax(8rem, 2fr) auto; gap: var(--esp-sm) var(--esp-md);
+  align-items: end; padding: var(--esp-md); background: var(--cor-superficie-2);
+  border: 1px solid var(--vidro-borda-fina); border-radius: var(--raio-sm);
+}
+.item-servico--com-erro { border-color: var(--cor-erro); }
+.item-servico label { display: block; font-size: var(--texto-xs); font-weight: 600; color: var(--marca-prata); margin-bottom: var(--esp-xs); text-transform: uppercase; letter-spacing: 0.06em; }
+.item-servico__nome { display: block; min-height: var(--toque); padding-top: 0.55rem; color: var(--cor-titulo); }
+.item-servico__nome:not([hidden]) + * { margin-top: 0; }
+.itens__rodape { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--esp-md); margin-bottom: var(--esp-lg); }
+.itens__total { margin: 0; font-size: var(--texto-lg); }
+.itens__total strong { font-family: var(--fonte-titulo); font-size: var(--titulo-2); color: var(--cor-titulo); margin-left: var(--esp-sm); }
+.itens-resumo { margin: 0 0 var(--esp-md); padding-left: var(--esp-lg); font-size: var(--texto-sm); color: var(--cor-texto-suave); }
+.servicos-resumo summary { cursor: pointer; min-height: var(--toque); display: flex; align-items: center; color: var(--cor-link); }
+.servicos-resumo ul { margin: 0; padding-left: var(--esp-md); font-size: var(--texto-sm); }
+.servico-opcao {
+  display: flex; align-items: center; gap: var(--esp-md); min-height: var(--toque); padding: 0.4rem 0.75rem; cursor: pointer;
+  background: var(--cor-superficie-2); border: 1px solid var(--vidro-borda); border-radius: var(--raio-sm);
+}
+.servico-opcao:hover { border-color: var(--marca-menta); }
+.servico-opcao span { flex: 1; }
+.servico-opcao small { color: var(--cor-texto-suave); }
+.servico-opcao input { flex-shrink: 0; }
+
 /* Campos que abrem um pop-up (cor, serviço): o <select> original continua no HTML e o JavaScript o esconde */
 .seletor-botao {
   display: flex; align-items: center; justify-content: space-between; gap: var(--esp-sm); width: 100%;
@@ -110,6 +136,8 @@ tr.linha--atrasada td:first-child { box-shadow: inset 4px 0 0 var(--cor-saida); 
 
 @media screen and (max-width: 899px) {
   .acoes--linha { flex-wrap: wrap; }
+  .item-servico { grid-template-columns: 1fr 1fr; }
+  .item-servico__servico, .item-servico__obs { grid-column: 1 / -1; }
 }
 @media print {
   .fotos-grade, .dialogo { display: none; }

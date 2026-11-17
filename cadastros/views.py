@@ -7,6 +7,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 
 from agenda.models import Agendamento
+from contas.acesso import pode_acessar
 
 from .crud import CriarCrud, DetalheCrud, EditarCrud, ExcluirCrud, ListaCrud
 from .forms import AlunoForm, ClienteForm, VeiculoForm
@@ -19,6 +20,9 @@ class HistoricoServicosMixin:
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        if not pode_acessar(self.request.user, "atendimentos"):   # módulo oculto para o perfil: nem consulta
+            ctx["totais"], ctx["atendimentos"] = None, []
+            return ctx
         atendimentos = self.object.atendimentos
         ctx["totais"] = atendimentos.totais()
         ctx["atendimentos"] = atendimentos.select_related(
@@ -43,7 +47,11 @@ class ClienteDetalhe(HistoricoServicosMixin, DetalheCrud):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["veiculos"] = self.object.veiculos.all()
-        if self.request.user.has_perm("agenda.view_agendamento"):
+        if self.request.user.has_perm("vip_preparacao.view_registrovip") and pode_acessar(self.request.user, "vip"):
+            from vip_preparacao.models import RegistroVip
+            ctx["registros_vip"] = (RegistroVip.objects.filter(cliente=self.object)
+                                    .prefetch_related("itens__servico").order_by("-data_preparacao", "-id")[:20])
+        if self.request.user.has_perm("agenda.view_agendamento") and pode_acessar(self.request.user, "agenda"):
             ctx["proximo_agendamento"] = (
                 Agendamento.objects.com_detalhes().futuros()
                 .filter(atendimento__cliente=self.object).order_by("inicio").first()

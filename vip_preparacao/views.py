@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db.models import ProtectedError, Q
+from django.db.models import Exists, OuterRef, ProtectedError, Q
 from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -15,15 +15,19 @@ from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from cadastros.models import Cliente, Veiculo
+from contas.acesso import pode_acessar
 from cadastros.validators import normalizar_placa
 from financeiro.models import FormaPagamento
 from servicos.models import TipoServico
 
 from . import regras
+from django.forms import inlineformset_factory
+
 from .forms import (
-    ConcluirVipForm, FiltroVipForm, FotosSaidaForm, RegistroVipForm, servicos_disponiveis,
+    BaseItensFormSet, ConcluirVipForm, FiltroVipForm, FotosSaidaForm, ItemServicoForm, RegistroVipForm,
+    servicos_disponiveis,
 )
-from .models import Cor, FotoVip, RegistroVip
+from .models import Cor, FotoVip, ItemServicoVip, RegistroVip
 
 Etapa = RegistroVip.Etapa
 Status = RegistroVip.Status
@@ -62,11 +66,11 @@ class VipLista(VipPermissao, ListView):
     model = RegistroVip
     template_name = "vip_preparacao/lista.html"
     paginate_by = settings.ITENS_POR_PAGINA
-    campos_busca = ["placa", "marca", "modelo", "versao", "cliente__nome", "nota_fiscal"]
+    campos_busca = ["placa", "marca", "modelo", "versao", "cliente__nome", "nota_fiscal"]   # + nomes dos serviços (itens)
 
     def get_queryset(self):
         g = self.request.GET
-        qs = RegistroVip.objects.select_related("cliente", "servico")
+        qs = RegistroVip.objects.select_related("cliente").prefetch_related("itens__servico")
         self.termo = g.get("q", "").strip()
         if self.termo:
             busca = Q()
@@ -75,6 +79,7 @@ class VipLista(VipPermissao, ListView):
                 busca |= Q(**{f"{campo}__icontains": self.termo})
             if placa:
                 busca |= Q(placa__icontains=placa)   # "abc-1234" acha ABC1234
+            busca |= Q(pk__in=ItemServicoVip.objects.filter(servico__nome__icontains=self.termo).values("registro_id"))
             qs = qs.filter(busca)
 
         # Por padrão só "Em andamento"; ?status=todos mostra tudo
@@ -91,7 +96,7 @@ class VipLista(VipPermissao, ListView):
             if c["cliente"]:
                 qs = qs.filter(cliente=c["cliente"])
             if c["servico"]:
-                qs = qs.filter(servico=c["servico"])
+                qs = qs.filter(Exists(ItemServicoVip.objects.filter(registro=OuterRef("pk"), servico=c["servico"])))
             campo = c["campo_data"] or "data_preparacao"
             if c["de"]:
                 qs = qs.filter(**{f"{campo}__gte": c["de"]})
@@ -123,7 +128,7 @@ class VipLista(VipPermissao, ListView):
 def _contexto_formulario(form, existentes):
     return {
         "cores": Cor.choices,
-        "servicos_modal": servicos_disponiveis(form._servico_antes),
+        "servicos_modal": servicos_disponiveis(),
         "posicoes_entrada": form.campos_de_fotos("entrada", existentes),
         "posicoes_saida": form.campos_de_fotos("saida", existentes),
     }
@@ -138,27 +143,58 @@ class _FormularioVip:
         kwargs["usuario"] = self.request.user
         return kwargs
 
+    def itens_formset(self, dados=None):
+        """Formset dos serviços (None em registro concluído: os itens ficam travados até reabrir)."""
+        if self.object and self.object.concluido:
+            return None
+        novo = not (self.object and self.object.pk)
+        classe = inlineformset_factory(
+            RegistroVip, ItemServicoVip, form=ItemServicoForm, formset=BaseItensFormSet,
+            extra=1 if (novo and dados is None) else 0, can_delete=True, max_num=30, validate_max=True)
+        return classe(dados, instance=self.object or RegistroVip(), prefix="itens", form_kwargs={
+            "pode_alterar_valor": self.request.user.has_perm(f"{APP}.alterar_valor_vip")})
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx.update(_contexto_formulario(ctx["form"], self._fotos_existentes()))
+        if "itens" not in ctx:
+            ctx["itens"] = self.itens_formset()
+        if self.object and self.object.pk:
+            ctx["itens_travados"] = self.object.concluido
+            ctx["itens_atuais"] = self.object.lista_itens
+        ctx["pode_alterar_valor"] = self.request.user.has_perm(f"{APP}.alterar_valor_vip")
         return ctx
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object() if isinstance(self, UpdateView) else None
+        form = self.get_form()
+        itens = self.itens_formset(request.POST)
+        form_ok = form.is_valid()
+        itens_ok = itens.is_valid() if itens is not None else True
+        if form_ok and itens_ok:
+            return self.form_valid(form, itens)
+        return self.form_invalid(form, itens)
 
     def _fotos_existentes(self):
         if not getattr(self, "object", None) or not self.object.pk:
             return {}
         return {(f.momento, f.posicao): f for f in self.object.fotos.all()}
 
-    def form_valid(self, form):
-        r = form.salvar()
+    def form_valid(self, form, itens=None):
+        try:
+            r = form.salvar(itens.itens_validados() if itens is not None else None)
+        except ValidationError as e:
+            messages.error(self.request, _mensagem_de_erro(e))
+            return self.form_invalid(form, itens)
         self.object = r
         messages.success(self.request, self.mensagem_sucesso)
         if form.nota_fiscal_repetida():
             messages.warning(self.request, f"Atenção: a nota fiscal {r.nota_fiscal} já existe em outro registro.")
         return redirect(r.get_absolute_url())
 
-    def form_invalid(self, form):
+    def form_invalid(self, form, itens=None):
         messages.error(self.request, "Não foi possível salvar. Corrija os campos destacados.")
-        return super().form_invalid(form)
+        return self.render_to_response(self.get_context_data(form=form, itens=itens if itens is not None else self.itens_formset()))
 
 
 class VipCriar(_FormularioVip, PermissionRequiredMixin, CreateView):
@@ -215,11 +251,11 @@ class VipFotosSaida(PermissionRequiredMixin, View):
         })
 
     def get(self, request, pk):
-        r = get_object_or_404(RegistroVip.objects.select_related("cliente", "servico"), pk=pk)
+        r = get_object_or_404(RegistroVip.objects.select_related("cliente"), pk=pk)
         return self._render(request, r, FotosSaidaForm(registro=r, usuario=request.user))
 
     def post(self, request, pk):
-        r = get_object_or_404(RegistroVip.objects.select_related("cliente", "servico"), pk=pk)
+        r = get_object_or_404(RegistroVip.objects.select_related("cliente"), pk=pk)
         form = FotosSaidaForm(request.POST, request.FILES, registro=r, usuario=request.user)
         if not form.is_valid():
             messages.error(request, "Não foi possível salvar as fotos. Corrija os campos destacados.")
@@ -231,7 +267,8 @@ class VipFotosSaida(PermissionRequiredMixin, View):
 
 class VipDetalhe(VipPermissao, DetailView):
     template_name = "vip_preparacao/detalhe.html"
-    queryset = RegistroVip.objects.select_related("cliente", "servico", "atendimento", "concluido_por", "criado_por", "alterado_por")
+    queryset = RegistroVip.objects.select_related("cliente", "concluido_por", "criado_por", "alterado_por").prefetch_related(
+        "itens__servico", "itens__atendimento")
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -243,7 +280,7 @@ class VipDetalhe(VipPermissao, DetailView):
         ordem = [p for p, _ in FotoVip.Posicao.choices]
         rotulo = dict(FotoVip.Posicao.choices)
         ctx.update(
-            historico=r.historico.select_related("usuario"),
+            historico=r.historico.select_related("usuario"), itens=r.lista_itens,
             fotos_entrada=[(rotulo[p], por_momento["entrada"][p]) for p in ordem if p in por_momento["entrada"]],
             fotos_saida=[(rotulo[p], por_momento["saida"][p]) for p in ordem if p in por_momento["saida"]],
             pode_editar=u.has_perm(f"{APP}.change_registrovip"),
@@ -272,16 +309,16 @@ class VipExcluir(PermissionRequiredMixin, View):
     def get(self, request, pk):
         from django.shortcuts import render
         r = self._objeto(pk)
-        if r.atendimento_id:
-            messages.error(request, "Este registro já gerou um atendimento e um recebimento no Financeiro e não pode "
-                                    "ser excluído. Se foi lançado por engano, reabra o registro.")
+        if r.itens.filter(atendimento__isnull=False).exists():
+            messages.error(request, "Este registro já foi concluído alguma vez e não pode ser excluído. "
+                                    "Se foi concluído por engano, reabra o registro.")
             return redirect(r.get_absolute_url())
         return render(request, self.template_name, self._contexto(r))
 
     def post(self, request, pk):
         r = self._objeto(pk)
-        if r.atendimento_id:
-            messages.error(request, "Este registro já gerou um atendimento e não pode ser excluído. Use a reabertura.")
+        if r.itens.filter(atendimento__isnull=False).exists():
+            messages.error(request, "Este registro já foi concluído alguma vez e não pode ser excluído. Use a reabertura.")
             return redirect(r.get_absolute_url())
         arquivos = [(f.imagem.storage, f.imagem.name) for f in r.fotos.all()] + \
                    [(f.miniatura.storage, f.miniatura.name) for f in r.fotos.all()]
@@ -316,7 +353,11 @@ class VipConcluir(PermissionRequiredMixin, View):
         except ValidationError as e:
             messages.error(request, _mensagem_de_erro(e))
         else:
-            messages.success(request, "Registro concluído e recebimento lançado no Financeiro.")
+            # quem não enxerga o Financeiro não recebe aviso que aponte para ele
+            if pode_acessar(request.user, "financeiro"):
+                messages.success(request, "Registro concluído e recebimentos lançados no Financeiro.")
+            else:
+                messages.success(request, "Registro concluído.")
         return redirect(r.get_absolute_url())
 
 
@@ -330,7 +371,10 @@ class VipReabrir(PermissionRequiredMixin, View):
         except ValidationError as e:
             messages.error(request, _mensagem_de_erro(e))
         else:
-            messages.success(request, "Registro reaberto. O recebimento foi estornado e consta no histórico.")
+            if pode_acessar(request.user, "financeiro"):
+                messages.success(request, "Registro reaberto. Os recebimentos foram estornados e constam no histórico.")
+            else:
+                messages.success(request, "Registro reaberto. O pagamento lançado foi desfeito e consta no histórico.")
         return redirect(r.get_absolute_url())
 
 

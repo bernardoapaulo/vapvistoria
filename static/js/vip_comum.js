@@ -42,6 +42,16 @@
     dialogo.querySelector("[data-concluir-form]").setAttribute("action", botao.getAttribute("data-url"));
     dialogo.querySelector("[data-concluir-placa]").textContent = botao.getAttribute("data-placa");
     dialogo.querySelector("#concluir-valor").value = botao.getAttribute("data-valor");
+    // lista de serviços do registro (nome e valor de cada um), só texto
+    var itens = dialogo.querySelector("[data-concluir-itens]");
+    itens.innerHTML = "";
+    try {
+      JSON.parse(botao.getAttribute("data-itens") || "[]").forEach(function (i) {
+        var li = document.createElement("li");
+        li.textContent = i.nome + " — " + Number(i.valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+        itens.appendChild(li);
+      });
+    } catch (erro) { /* sem a lista, o total continua valendo */ }
     abrir(dialogo, botao);
   });
 })();

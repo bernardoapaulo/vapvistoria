@@ -6,7 +6,7 @@
     <h1><span class="placa">{{ object.placa }}</span> {% with r=object %}{% include "vip_preparacao/etiqueta_etapa.html" %}{% endwith %}</h1>
     <div class="acoes">
       {% if pode_concluir %}
-        <button type="button" class="btn" data-concluir data-url="{% url 'vip_concluir' object.pk %}" data-placa="{{ object.placa }}" data-valor="{{ object.valor|unlocalize }}">Marcar como concluído</button>
+        <button type="button" class="btn" data-concluir data-url="{% url 'vip_concluir' object.pk %}" data-placa="{{ object.placa }}" data-valor="{{ object.valor|unlocalize }}" data-itens="{{ object.itens_json }}">Marcar como concluído</button>
       {% endif %}
       {% if pode_reabrir %}
         <form method="post" action="{% url 'vip_reabrir' object.pk %}" data-confirmar="Reabrir este registro? O recebimento lançado no Financeiro será estornado (fica registrado no histórico) e o atendimento voltará para Em andamento.">
@@ -17,7 +17,7 @@
       {% if pode_editar %}
         <a class="btn btn--secundario" href="{% url 'vip_editar' object.pk %}">{% include "partials/icone.html" with nome="pencil" %}{% if object.concluido and not pode_editar_tudo %}Adicionar fotos de saída{% else %}Editar{% endif %}</a>
       {% endif %}
-      {% if pode_excluir and not object.atendimento_id %}<a class="btn btn--perigo" href="{% url 'vip_excluir' object.pk %}">{% include "partials/icone.html" with nome="trash-2" %}Excluir</a>{% endif %}
+      {% if pode_excluir and not object.concluido %}<a class="btn btn--perigo" href="{% url 'vip_excluir' object.pk %}">{% include "partials/icone.html" with nome="trash-2" %}Excluir</a>{% endif %}
       <a class="btn btn--secundario" href="{% url 'vip_lista' %}">Voltar</a>
     </div>
   </div>
@@ -31,24 +31,39 @@
       <div><dt>Cor</dt><dd>{% if object.cor %}<span class="amostra amostra--{{ object.cor }}" aria-hidden="true"></span>{{ object.cor_texto }}{% else %}—{% endif %}</dd></div>
       <div><dt>Ano</dt><dd>{{ object.ano|default:"—" }}</dd></div>
       <div><dt>Chassi</dt><dd>{{ object.chassi|default:"—" }}</dd></div>
-      <div><dt>Serviço</dt><dd>{{ object.servico.nome }} <small>({{ object.servico.get_categoria_display }})</small></dd></div>
       <div><dt>Data de preparação</dt><dd>{{ object.data_preparacao|date:"d/m/Y" }}</dd></div>
       <div><dt>Data VIP</dt><dd>{{ object.data_vip|date:"d/m/Y"|default:"—" }}</dd></div>
       <div><dt>Data de devolução</dt><dd>{{ object.data_devolucao|date:"d/m/Y"|default:"—" }}</dd></div>
-      <div><dt>Valor</dt><dd><strong>{{ object.valor|moeda }}</strong></dd></div>
+      <div><dt>Valor total</dt><dd><strong>{{ object.valor|moeda }}</strong></dd></div>
       <div><dt>Previsão de pagamento</dt><dd>{{ object.previsao_pagamento|date:"d/m/Y"|default:"—" }}</dd></div>
       <div><dt>Nota fiscal</dt><dd>{{ object.nota_fiscal|default:"—" }}</dd></div>
       <div><dt>Status</dt><dd><span class="etiqueta {% if object.concluido %}etiqueta--ativo{% endif %}">{{ object.get_status_display }}</span></dd></div>
       {% if object.concluido %}
         <div><dt>Concluído por</dt><dd>{{ object.concluido_por.get_username|default:"—" }} em {{ object.concluido_em|date:"d/m/Y H:i" }}</dd></div>
       {% endif %}
-      {% if object.atendimento_id and perms.atendimentos.view_atendimento %}
-        <div><dt>Atendimento gerado</dt><dd><a href="{{ object.atendimento.get_absolute_url }}">Atendimento #{{ object.atendimento_id }}</a></dd></div>
-      {% endif %}
       <div><dt>Criado por</dt><dd>{{ object.criado_por.get_username|default:"—" }} em {{ object.criado_em|date:"d/m/Y H:i" }}</dd></div>
       <div><dt>Última alteração</dt><dd>{{ object.alterado_por.get_username|default:"—" }} em {{ object.alterado_em|date:"d/m/Y H:i" }}</dd></div>
     </dl>
     {% if object.observacao %}<h3>Observação</h3><p>{{ object.observacao|linebreaksbr }}</p>{% endif %}
+  </div>
+
+  <div class="cartao">
+    <h2>Serviços</h2>
+    <div class="tabela-wrap"><table class="responsiva">
+      <thead><tr><th>Serviço</th><th>Categoria</th><th>Observação</th><th class="numero">Valor</th>{% if object.concluido and modulos.atendimentos %}<th>Atendimento</th>{% endif %}</tr></thead>
+      <tbody>
+        {% for i in itens %}
+        <tr>
+          <td data-rotulo="Serviço"><strong>{{ i.servico.nome }}</strong></td>
+          <td data-rotulo="Categoria">{{ i.servico.get_categoria_display }}</td>
+          <td data-rotulo="Observação">{{ i.observacao|default:"—" }}</td>
+          <td data-rotulo="Valor" class="numero">{{ i.valor|moeda }}</td>
+          {% if object.concluido and modulos.atendimentos %}<td data-rotulo="Atendimento">{% if i.atendimento_id and perms.atendimentos.view_atendimento %}<a href="{{ i.atendimento.get_absolute_url }}">#{{ i.atendimento_id }}</a>{% else %}—{% endif %}</td>{% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot class="tabela-totais"><tr><th colspan="3">Total</th><th class="numero">{{ object.valor|moeda }}</th>{% if object.concluido and modulos.atendimentos %}<th></th>{% endif %}</tr></tfoot>
+    </table></div>
   </div>
 
   <div class="cartao">

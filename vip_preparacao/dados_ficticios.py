@@ -18,7 +18,7 @@ from servicos.models import TipoServico
 
 from . import fotos, regras
 from .forms import servicos_disponiveis
-from .models import Cor, FotoVip, RegistroVip
+from .models import Cor, FotoVip, ItemServicoVip, RegistroVip
 
 POSICOES = [p for p, _ in FotoVip.Posicao.choices]
 ROTULOS = dict(FotoVip.Posicao.choices)
@@ -61,9 +61,8 @@ def apagar_registros():
                 arquivo.storage.delete(arquivo.name)
             except Exception:
                 pass
-    registros = RegistroVip.objects.all()
-    atendimentos = list(registros.exclude(atendimento=None).values_list("atendimento_id", flat=True))
-    registros.delete()
+    atendimentos = list(ItemServicoVip.objects.exclude(atendimento=None).values_list("atendimento_id", flat=True))
+    RegistroVip.objects.all().delete()          # os itens saem junto (cascade)
     return atendimentos
 
 
@@ -101,14 +100,20 @@ def gerar_registros_vip(usuarios, refazer=False):
     ]
     criados = 0
     for i, ((prep, vip, devolucao, concluir), (placa, marca, modelo, versao, cor, ano)) in enumerate(zip(modelos, VEICULOS)):
-        servico = servicos[i % len(servicos)]
         r = RegistroVip.objects.create(
             cliente=clientes[i % len(clientes)], placa=placa, marca=marca, modelo=modelo, versao=versao, cor=cor,
-            ano=ano, chassi=f"9BWZZZ377VT{rnd.randint(100000, 999999)}" if i % 3 == 0 else "", servico=servico,
-            data_preparacao=prep, data_vip=vip, data_devolucao=devolucao, valor=servico.valor_padrao,
+            ano=ano, chassi=f"9BWZZZ377VT{rnd.randint(100000, 999999)}" if i % 3 == 0 else "",
+            data_preparacao=prep, data_vip=vip, data_devolucao=devolucao,
             previsao_pagamento=(devolucao or dia(7)) + timedelta(days=rnd.randint(0, 5)),
             nota_fiscal=f"NF-{1000 + i}" if i % 2 == 0 else "", observacao="Registro fictício para testes." if i % 4 == 0 else "",
             criado_por=admin, alterado_por=admin)
+        # 1, 2 ou 3 serviços (em ciclo); o primeiro escolhido pelo índice, os outros em seguida
+        for n in range(i % 3 + 1):
+            servico = servicos[(i + n * 3) % len(servicos)]
+            ItemServicoVip.objects.create(
+                registro=r, servico=servico, valor=servico.valor_padrao,
+                observacao="Item fictício" if n == 2 else "")
+        regras.recalcular_total(r)
         regras.registrar_criacao(r, admin)
 
         # Fotos de exemplo: entrada em quase todos; saída só nos concluídos e em alguns prontos

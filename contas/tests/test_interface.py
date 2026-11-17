@@ -66,8 +66,8 @@ class InterfaceTest(TestCase):
 
     def test_funcionario_ve_menu_sem_financeiro(self):
         self.client.force_login(self.func)
-        self._paginas(["inicio", "atendimento_lista", "agenda_calendario", "cliente_lista", "vip_lista", "vip_novo"])
-        html = self.client.get(reverse("inicio")).content.decode()
+        self._paginas(["cliente_lista", "servico_lista", "vip_lista", "vip_novo"])   # o que o Funcionário enxerga
+        html = self.client.get(reverse("vip_lista")).content.decode()
         self.assertNotIn(reverse("financeiro"), html)
         self.assertIn("Funcionário", html)
         self.assertIn('aria-current="page"', html)

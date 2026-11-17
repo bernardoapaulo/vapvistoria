@@ -5,7 +5,9 @@ Definição dos perfis (grupos) e de suas permissões.
   agenda, incluindo valor/desconto, reabrir, excluir e horário de funcionamento).
 - Funcionário: gerencia clientes, alunos e veículos; cria, edita e muda o status
   de atendimentos e de agendamentos (sem alterar valor/desconto, reabrir ou
-  excluir); vê a agenda de todos; apenas CONSULTA os tipos de serviço.
+  excluir); vê a agenda de todos; consulta e CADASTRA tipos de serviço (não edita nem exclui).
+  Essas permissões continuam no banco, mas hoje o Funcionário só enxerga Clientes, Serviços e Vip/Preparação
+  (ver ACESSO_POR_PERFIL).
 
 - Vip/Preparação: os dois perfis criam, editam, concluem (lança o recebimento), reabrem e excluem; só o
   Administrador altera o valor e edita um registro já concluído.
@@ -16,6 +18,22 @@ from django.contrib.auth.models import Group, Permission
 
 ADMINISTRADOR = "Administrador"
 FUNCIONARIO = "Funcionário"
+
+# ---------------------------------------------------------------------------------------------------------------
+# CENTRAL DE ACESSO: quais módulos cada perfil ENXERGA (menu, página inicial, links e bloqueio no servidor leem daqui).
+# Módulos: inicio, clientes, alunos, veiculos, servicos, atendimentos, agenda, dashboard, financeiro, vip, admin.
+# Para liberar de novo um módulo ao Funcionário, acrescente o nome dele na lista abaixo (ex.: "agenda"): é só isso.
+# Ocultar NÃO apaga nada: código, dados e as permissões abaixo continuam como estão; vale módulo liberado E permissão.
+# ---------------------------------------------------------------------------------------------------------------
+TODOS_OS_MODULOS = "todos"
+ACESSO_POR_PERFIL = {
+    ADMINISTRADOR: TODOS_OS_MODULOS,
+    FUNCIONARIO: ("clientes", "servicos", "vip"),
+}
+# Perfil sem o módulo "inicio": para onde vai ao entrar (nome da URL)
+PAGINA_INICIAL_POR_PERFIL = {
+    FUNCIONARIO: "vip_lista",
+}
 
 TODAS = ["view", "add", "change", "delete"]
 CADASTROS_COMPLETOS = ["cliente", "aluno", "veiculo"]
@@ -62,7 +80,7 @@ def criar_grupos():
     func, _ = Group.objects.get_or_create(name=FUNCIONARIO)
     func.permissions.set(
         _permissoes(CADASTROS_COMPLETOS, TODAS)
-        + _permissoes(SOMENTE_CONSULTA, ["view"])
+        + _permissoes(SOMENTE_CONSULTA, ["view", "add"])   # consulta e cadastra serviços; editar/excluir só o Administrador
         + _permissoes_do_app("atendimentos", "atendimento", ["view", "add", "change"])
         + _permissoes_do_app("agenda", "agendamento", ["view", "add", "change"])
         # Única exceção no Financeiro: registrar um recebimento na tela do atendimento (caixa do dia a dia).

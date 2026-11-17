@@ -130,10 +130,14 @@ class DadosFicticiosTest(BaseVipTest):
         self.assertTrue({"aguardando", "preparacao", "vip", "pronto", "atrasada", "concluido"} <= {str(e) for e in etapas})
         concluidos = [r for r in registros if r.concluido]
         self.assertGreaterEqual(len(concluidos), 3)
-        for r in concluidos:               # concluídos têm atendimento pago e recebimento correspondente
-            self.assertEqual(r.atendimento.situacao_pagamento, "pago")
-            (rec,) = r.atendimento.recebimentos.validos()
-            self.assertEqual(rec.valor, r.valor)
+        for r in concluidos:               # concluídos: um atendimento pago e um recebimento por item; a soma fecha com o total
+            self.assertEqual(r.atendimentos.count(), len(r.lista_itens))
+            for item in r.lista_itens:
+                self.assertEqual(item.atendimento.situacao_pagamento, "pago")
+                (rec,) = item.atendimento.recebimentos.validos()
+                self.assertEqual(rec.valor, item.valor)
+            self.assertEqual(sum(x.valor for a in r.atendimentos for x in a.recebimentos.validos()), r.valor)
+        self.assertEqual({len(r.lista_itens) for r in registros}, {1, 2, 3})
         self.assertGreater(FotoVip.objects.count(), 20)
         self.assertEqual(gerar_registros_vip([self.admin]), 0)                 # não duplica
         self.assertEqual(RegistroVip.objects.count(), 15)
@@ -145,4 +149,5 @@ class DadosFicticiosTest(BaseVipTest):
         antes = Atendimento.objects.count()
         gerar_registros_vip([self.admin], refazer=True)
         self.assertEqual(Atendimento.objects.count(), antes)               # sem acumular atendimentos
-        self.assertEqual(Recebimento.objects.count(), RegistroVip.objects.concluidos().count())
+        itens_concluidos = sum(len(r.lista_itens) for r in RegistroVip.objects.concluidos().prefetch_related('itens'))
+        self.assertEqual(Recebimento.objects.count(), itens_concluidos)

@@ -37,6 +37,10 @@ class ServicoCriar(CriarCrud):
     form_class = TipoServicoForm
     extra_context = {"titulo": "Novo tipo de serviço", "url_voltar": reverse_lazy("servico_lista")}
 
+    def form_valid(self, form):
+        form.instance.criado_por = self.request.user    # o Funcionário também cadastra; fica registrado quem foi
+        return super().form_valid(form)
+
 
 class ServicoEditar(EditarCrud):
     model = TipoServico

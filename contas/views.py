@@ -1,5 +1,8 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import redirect
 from django.views.generic import TemplateView
+
+from .acesso import pagina_inicial
 
 from agenda.consultas import contar_pendencias
 from agenda.models import Agendamento
@@ -13,6 +16,12 @@ from servicos.models import TipoServico
 class InicioView(LoginRequiredMixin, TemplateView):
     """Página inicial simples com contadores. Será enriquecida nas próximas etapas."""
     template_name = "inicio.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        # Perfil sem o módulo "inicio" (ex.: Funcionário) vai direto para a página inicial dele
+        if request.user.is_authenticated and pagina_inicial(request.user) != "inicio":
+            return redirect(pagina_inicial(request.user))
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)

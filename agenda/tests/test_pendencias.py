@@ -97,5 +97,5 @@ class PendenciasTest(BaseAgendaTest):
     def test_consultas_da_agenda_usam_poucas_consultas(self):
         for i in range(10):
             self.agendar(self.agora + timedelta(hours=i + 1), responsavel=self.func)
-        with self.assertNumQueries(7):  # sessão, usuário, permissões (2), total, responsáveis do filtro, agendamentos
+        with self.assertNumQueries(8):  # sessão, usuário, permissões (2), perfil (acesso por módulo), total, responsáveis do filtro, agendamentos
             self.client.get(reverse("agendamento_lista"))

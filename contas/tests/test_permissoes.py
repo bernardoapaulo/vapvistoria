@@ -36,9 +36,9 @@ class PermissoesTest(TestCase):
             self.assertRedirects(resp, f"{reverse('login')}?next={url}", msg_prefix=url)
 
     # --- funcionário ---
-    def test_funcionario_nao_edita_tipo_de_servico(self):
+    def test_funcionario_cadastra_mas_nao_edita_tipo_de_servico(self):
         self.client.force_login(self.func)
-        self.assertEqual(self.client.get(reverse("servico_novo")).status_code, 403)
+        self.assertEqual(self.client.get(reverse("servico_novo")).status_code, 200)       # cadastrar pode
         self.assertEqual(self.client.get(reverse("servico_editar", args=[self.servico.pk])).status_code, 403)
         resp = self.client.post(
             reverse("servico_editar", args=[self.servico.pk]),
@@ -76,7 +76,7 @@ class PermissoesTest(TestCase):
 
     def test_login_com_credenciais_corretas(self):
         resp = self.client.post(reverse("login"), {"username": "func", "password": "x"})
-        self.assertRedirects(resp, reverse("inicio"))
+        self.assertRedirects(resp, reverse("inicio"), fetch_redirect_response=False)   # "/" leva à página do perfil
 
     def test_grupos_criados_automaticamente(self):
         self.assertEqual(Group.objects.filter(name__in=[ADMINISTRADOR, FUNCIONARIO]).count(), 2)
@@ -84,4 +84,5 @@ class PermissoesTest(TestCase):
         codenames = set(func.permissions.values_list("codename", flat=True))
         self.assertIn("view_tiposervico", codenames)
         self.assertNotIn("change_tiposervico", codenames)
-        self.assertNotIn("add_tiposervico", codenames)
+        self.assertNotIn("delete_tiposervico", codenames)
+        self.assertIn("add_tiposervico", codenames)        # o Funcionário cadastra serviços

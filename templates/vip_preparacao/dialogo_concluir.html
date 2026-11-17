@@ -5,13 +5,14 @@
     <h2 id="dialogo-concluir-titulo">Concluir e lançar recebimento</h2>
     <button type="button" class="btn btn--fantasma btn--pequeno" data-fechar-dialogo aria-label="Fechar">{% include "partials/icone.html" with nome="x" %}</button>
   </div>
-  <p class="campo__ajuda">Veículo <strong data-concluir-placa></strong>. Ao confirmar, o serviço é concluído e o valor é lançado como recebimento no Financeiro.</p>
+  <p class="campo__ajuda">Veículo <strong data-concluir-placa></strong>. Ao confirmar, os serviços são concluídos e o pagamento é registrado (um recebimento por serviço, somando o total).</p>
+  <ul class="itens-resumo" data-concluir-itens></ul>
   <form method="post" action="" data-concluir-form>
     {% csrf_token %}
     <div class="campo">
-      <label for="concluir-valor">Valor recebido (R$)</label>
+      <label for="concluir-valor">Valor total recebido (R$)</label>
       <input id="concluir-valor" type="number" name="valor" step="0.01" min="0" inputmode="decimal" {% if not pode_alterar_valor %}readonly aria-describedby="concluir-valor-ajuda"{% endif %}>
-      {% if not pode_alterar_valor %}<div class="campo__ajuda" id="concluir-valor-ajuda">Só o Administrador altera o valor.</div>{% endif %}
+      {% if not pode_alterar_valor %}<div class="campo__ajuda" id="concluir-valor-ajuda">Só o Administrador altera o valor total.</div>{% endif %}
     </div>
     <div class="campo">
       <label for="concluir-forma">Forma de pagamento</label>

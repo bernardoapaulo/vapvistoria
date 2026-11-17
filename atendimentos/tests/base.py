@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from atendimentos.models import Atendimento
 from cadastros.models import Aluno, Cliente, Veiculo
@@ -12,7 +12,14 @@ from servicos.models import TipoServico
 
 Cat = TipoServico.Categoria
 
+# Os testes dos módulos Atendimentos, Agenda, Dashboard e Financeiro exercitam as permissões do Funcionário nesses
+# módulos (que continuam no banco, mas hoje ficam OCULTOS por padrão). Eles rodam com o mapa de acesso liberado; a
+# restrição padrão tem testes próprios em contas/tests/test_acesso.py.
+ACESSO_TOTAL = {ADMINISTRADOR: "todos", FUNCIONARIO: ("inicio", "clientes", "alunos", "veiculos", "servicos", "atendimentos",
+                                                     "agenda", "dashboard", "financeiro", "vip")}
 
+
+@override_settings(ACESSO_POR_PERFIL=ACESSO_TOTAL)
 class BaseAtendimentoTest(TestCase):
     """Cria usuários dos dois perfis e dados mínimos para os testes de atendimento."""
 

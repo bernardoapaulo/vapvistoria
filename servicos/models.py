@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.urls import reverse
@@ -20,6 +21,9 @@ class TipoServico(models.Model):
         validators=[MinValueValidator(Decimal("0.00"), "O valor não pode ser negativo.")],
     )
     ativo = models.BooleanField("ativo", default=True)
+    criado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, verbose_name="cadastrado por", null=True, blank=True, editable=False,
+        on_delete=models.SET_NULL, related_name="+")
 
     class Meta:
         verbose_name = "tipo de serviço"

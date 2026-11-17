@@ -55,7 +55,7 @@ class ValidacaoDosDadosTest(BaseVipTest):
 
     def test_campos_obrigatorios(self):
         r = self.criar_pelo_form(cliente="", servico="", placa="", data_preparacao="")
-        for texto in ("Selecione o cliente.", "Selecione o serviço.", "Informe a placa do veículo.",
+        for texto in ("Selecione o cliente.", "Informe pelo menos 1 serviço.", "Informe a placa do veículo.",
                       "Informe a data de preparação"):
             self.assertContains(r, texto)
 
@@ -69,6 +69,7 @@ class ValidacaoDosDadosTest(BaseVipTest):
         self.assertNotContains(resposta, "Curso")
         self.assertContains(resposta, "VIP completo")
         self.assertEqual(self.criar_pelo_form(servico=self.curso.pk).status_code, 200)   # volta com erro
+        self.assertEqual(RegistroVip.objects.count(), 0)
 
     def test_servico_inativo_nao_e_oferecido(self):
         self.preparacao.ativo = False
@@ -98,23 +99,28 @@ class ValorAutomaticoTest(BaseVipTest):
     def test_funcionario_nao_altera_o_valor_ao_editar(self):
         r = self.registro(valor=Decimal("200.00"))
         self.client.force_login(self.func)
-        dados = self.dados_form(placa=r.placa, valor="1.00", observacao="mudou")
+        dados = self.dados_form(registro=r, placa=r.placa, observacao="mudou")
+        dados["itens-0-valor"] = "1.00"                       # tentativa do Funcionário
         self.client.post(reverse("vip_editar", args=[r.pk]), dados)
         r.refresh_from_db()
-        self.assertEqual((r.valor, r.observacao), (Decimal("200.00"), "mudou"))
+        self.assertEqual((r.valor, r.itens.get().valor, r.observacao), (Decimal("200.00"), Decimal("200.00"), "mudou"))
 
     def test_funcionario_trocando_o_servico_recebe_o_valor_do_novo_servico(self):
         r = self.registro()
         self.client.force_login(self.func)
-        self.client.post(reverse("vip_editar", args=[r.pk]), self.dados_form(placa=r.placa, servico=self.preparacao.pk))
+        dados = self.dados_form(registro=r, placa=r.placa)
+        dados["itens-0-servico"] = self.preparacao.pk
+        self.client.post(reverse("vip_editar", args=[r.pk]), dados)
         r.refresh_from_db()
-        self.assertEqual((r.servico, r.valor), (self.preparacao, Decimal("300.00")))
+        item = r.itens.get()
+        self.assertEqual((item.servico, item.valor, r.valor), (self.preparacao, Decimal("300.00"), Decimal("300.00")))
 
     def test_campo_valor_aparece_bloqueado_para_o_funcionario(self):
         self.client.force_login(self.func)
-        self.assertContains(self.client.get(reverse("vip_novo")), 'name="valor"')
-        self.assertContains(self.client.get(reverse("vip_novo")), "disabled")
-        self.assertContains(self.client.get(reverse("vip_novo")), "Só o Administrador altera o valor.")
+        pagina = self.client.get(reverse("vip_novo"))
+        self.assertContains(pagina, 'name="itens-0-valor"')
+        self.assertRegex(pagina.content.decode(), r'<input[^>]*name="itens-0-valor"[^>]*disabled')
+        self.assertContains(pagina, "só o Administrador os altera")
 
 
 class NotaFiscalTest(BaseVipTest):
@@ -130,12 +136,13 @@ class HistoricoTest(BaseVipTest):
     def test_criacao_e_edicoes_relevantes_sao_registradas(self):
         self.criar_pelo_form(placa="HIS1A23")
         r = RegistroVip.objects.get(placa="HIS1A23")
-        self.client.post(reverse("vip_editar", args=[r.pk]), self.dados_form(
-            placa="HIS1A23", valor="200.00", data_devolucao=self.dias(5).isoformat(), servico=self.preparacao.pk))
+        dados = self.dados_form(registro=r, placa="HIS1A23", data_devolucao=self.dias(5).isoformat())
+        dados["itens-0-valor"], dados["itens-0-servico"] = "200.00", self.preparacao.pk
+        self.client.post(reverse("vip_editar", args=[r.pk]), dados)
         tipos = list(r.historico.values_list("tipo", flat=True))
         self.assertEqual(tipos[0], "criacao")
-        textos = " | ".join(h.valor_novo for h in r.historico.filter(tipo="edicao"))
-        self.assertIn("valor: R$ 200,00", textos)
-        self.assertIn("serviço: Preparação", textos)
-        self.assertIn("data de devolução", textos)
+        textos = " | ".join(h.valor_novo for h in r.historico.filter(tipo="itens"))
+        self.assertIn("valor R$ 150,00 → R$ 200,00", textos)
+        self.assertIn("serviço VIP completo → Preparação", textos)
+        self.assertIn("data de devolução", " | ".join(h.valor_novo for h in r.historico.filter(tipo="edicao")))
         self.assertEqual(r.historico.first().usuario, self.admin)
