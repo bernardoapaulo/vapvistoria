@@ -153,6 +153,10 @@ O Funcionário **só enxerga Clientes, Serviços e Vip/Preparação**. Os outros
 
 Pelo painel `/admin/`, como **Administrador** (conta com "Membro da equipe" marcado): **Usuários → Adicionar usuário**, informe usuário e senha, salve e, na tela seguinte, escolha o **grupo** (Funcionário ou Administrador) e salve de novo. Sem grupo o usuário não enxerga nenhum módulo. O Administrador comum vê, cria e altera usuários, mas não vira superusuário, não mexe em superusuários e não exclui (desative com "Ativo"). As permissões são aplicadas a cada `migrate` (inclusive no deploy da Vercel).
 
+## Limpar os dados de teste e colocar em uso
+
+`python manage.py limpar_dados_teste` mostra o que seria apagado; com `--confirmar` apaga clientes, alunos, veículos, atendimentos, agendamentos, recebimentos, despesas, fechamentos, auditoria, registros Vip (com fotos) e os tipos de serviço. **Fica** o resto: usuários (menos o fictício `funcionario_teste`), grupos, categorias de despesa e horário de funcionamento. Na Vercel: defina `LIMPAR_DADOS_TESTE=SIM`, faça *Redeploy* e depois apague a variável (o comando só age se os dados fictícios ainda existirem, então deixá-la ligada não apaga dados reais). Não deixe `CARREGAR_DADOS_FICTICIOS` ligada junto. Depois da limpeza, cadastre os serviços reais em **Serviços**.
+
 ## Estrutura
 
 ```
