@@ -149,6 +149,10 @@ O Funcionário **só enxerga Clientes, Serviços e Vip/Preparação**. Os outros
 - **Dentro dos módulos permitidos:** o autocompletar de cliente, o pop-up de serviços e o preenchimento do veículo pela placa continuam funcionando e devolvem só o necessário. No detalhe do cliente o Funcionário vê contato, veículos (só texto) e registros Vip sem valores; some o histórico de atendimentos, o total gasto, o próximo agendamento e todo link para módulo oculto. Avisos que citam o Financeiro também não aparecem para ele (a conclusão continua lançando o recebimento por baixo).
 - **Serviços:** o Funcionário consulta (com o valor padrão) e **cadastra** serviços; editar e excluir continuam só com o Administrador. Fica registrado quem cadastrou.
 
+## Cadastrar usuários (login e senha)
+
+Pelo painel `/admin/`, como **Administrador** (conta com "Membro da equipe" marcado): **Usuários → Adicionar usuário**, informe usuário e senha, salve e, na tela seguinte, escolha o **grupo** (Funcionário ou Administrador) e salve de novo. Sem grupo o usuário não enxerga nenhum módulo. O Administrador comum vê, cria e altera usuários, mas não vira superusuário, não mexe em superusuários e não exclui (desative com "Ativo"). As permissões são aplicadas a cada `migrate` (inclusive no deploy da Vercel).
+
 ## Estrutura
 
 ```

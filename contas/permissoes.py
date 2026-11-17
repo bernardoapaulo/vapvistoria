@@ -11,6 +11,7 @@ Definição dos perfis (grupos) e de suas permissões.
 
 - Vip/Preparação: os dois perfis criam, editam, concluem (lança o recebimento), reabrem e excluem; só o
   Administrador altera o valor e edita um registro já concluído.
+- Usuários (/admin/): só o Administrador cadastra e altera (ver, criar e alterar; não exclui; não vira superusuário).
 - Financeiro: tudo é do Administrador. O Funcionário só tem `financeiro.add_recebimento` (registrar
   recebimento na tela do atendimento); não vê o módulo, totais, despesas, nem estorna/edita.
 """
@@ -75,6 +76,9 @@ def criar_grupos():
         + _permissoes_do_app("financeiro", "categoriadespesa", TODAS)
         + _permissoes_do_app("financeiro", "fechamentomes", ["view"], ["fechar_mes"])
         + _permissoes_do_app("vip_preparacao", "registrovip", TODAS, VIP_EXTRAS_ADMINISTRADOR)
+        # Usuários: o Administrador cadastra login e senha e escolhe o perfil em /admin/ (sem excluir; ver contas/admin.py)
+        + _permissoes_do_app("auth", "user", ["view", "add", "change"])
+        + _permissoes_do_app("auth", "group", ["view"])
     )
 
     func, _ = Group.objects.get_or_create(name=FUNCIONARIO)
