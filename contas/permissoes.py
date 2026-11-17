@@ -7,6 +7,8 @@ Definição dos perfis (grupos) e de suas permissões.
   de atendimentos e de agendamentos (sem alterar valor/desconto, reabrir ou
   excluir); vê a agenda de todos; apenas CONSULTA os tipos de serviço.
 
+- Vip/Preparação: os dois perfis criam, editam, concluem (lança o recebimento), reabrem e excluem; só o
+  Administrador altera o valor e edita um registro já concluído.
 - Financeiro: tudo é do Administrador. O Funcionário só tem `financeiro.add_recebimento` (registrar
   recebimento na tela do atendimento); não vê o módulo, totais, despesas, nem estorna/edita.
 """
@@ -23,6 +25,9 @@ SOMENTE_CONSULTA = ["tiposervico"]
 ATENDIMENTO_EXTRAS = ["alterar_valor", "reabrir", "ver_faturamento", "exportar_dados"]
 AGENDAMENTO_EXTRAS = ["reabrir"]
 RECEBIMENTO_EXTRAS = ["ver_financeiro", "estornar_recebimento"]
+# Vip/Preparação: o que cada perfil pode além de ver/criar/editar/excluir (ajuste aqui)
+VIP_EXTRAS_ADMINISTRADOR = ["alterar_valor_vip", "concluir_vip", "reabrir_vip", "editar_concluido_vip"]
+VIP_EXTRAS_FUNCIONARIO = ["concluir_vip", "reabrir_vip"]
 
 
 def _permissoes(modelos, acoes):
@@ -51,6 +56,7 @@ def criar_grupos():
         + _permissoes_do_app("financeiro", "despesa", TODAS)
         + _permissoes_do_app("financeiro", "categoriadespesa", TODAS)
         + _permissoes_do_app("financeiro", "fechamentomes", ["view"], ["fechar_mes"])
+        + _permissoes_do_app("vip_preparacao", "registrovip", TODAS, VIP_EXTRAS_ADMINISTRADOR)
     )
 
     func, _ = Group.objects.get_or_create(name=FUNCIONARIO)
@@ -61,5 +67,6 @@ def criar_grupos():
         + _permissoes_do_app("agenda", "agendamento", ["view", "add", "change"])
         # Única exceção no Financeiro: registrar um recebimento na tela do atendimento (caixa do dia a dia).
         + _permissoes_do_app("financeiro", "recebimento", ["add"])
+        + _permissoes_do_app("vip_preparacao", "registrovip", TODAS, VIP_EXTRAS_FUNCIONARIO)
     )
     return admin, func

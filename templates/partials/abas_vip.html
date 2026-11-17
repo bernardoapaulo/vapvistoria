@@ -1,0 +1,5 @@
+{# Navegação interna do Vip/Preparação (mesmo componente .abas do Financeiro). Uso: include com aba="todas|novo" #}
+<nav class="abas nao-imprimir" aria-label="Seções do Vip/Preparação">
+  <a href="{% url 'vip_lista' %}" class="{% if aba == 'todas' %}ativo{% endif %}"{% if aba == 'todas' %} aria-current="page"{% endif %}>Todas</a>
+  {% if perms.vip_preparacao.add_registrovip %}<a href="{% url 'vip_novo' %}" class="{% if aba == 'novo' %}ativo{% endif %}"{% if aba == 'novo' %} aria-current="page"{% endif %}>Novo</a>{% endif %}
+</nav>

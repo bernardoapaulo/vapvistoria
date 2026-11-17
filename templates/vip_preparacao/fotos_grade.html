@@ -1,0 +1,16 @@
+{# Grade de campos de foto. Uso: include com itens=posicoes_entrada|posicoes_saida. No celular, o campo de arquivo oferece câmera ou galeria. #}
+<div class="fotos-grade">
+  {% for item in itens %}
+  <div class="foto-campo{% if item.campo.errors %} foto-campo--com-erro{% endif %}" data-foto-campo>
+    <label class="foto-campo__nome" for="{{ item.campo.id_for_label }}">{{ item.rotulo }}</label>
+    <div class="foto-campo__previa" data-previa>
+      {% if item.foto %}<img src="{% url 'vip_foto' item.foto.pk 'mini' %}" alt="Foto atual: {{ item.rotulo }}" width="320" height="240" loading="lazy">{% else %}Sem foto{% endif %}
+    </div>
+    {{ item.campo }}
+    {% for erro in item.campo.errors %}<div class="campo__erro">{{ erro }}</div>{% endfor %}
+    {% if item.remover and item.foto %}
+      <label class="foto-campo__remover">{{ item.remover }} Remover esta foto</label>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>

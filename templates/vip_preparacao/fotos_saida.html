@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load static %}
+{% block titulo %}Fotos de saída {{ object.placa }}{% endblock %}
+{% block conteudo %}
+  <div class="cabecalho-pagina">
+    <h1>Fotos de saída <span class="placa">{{ object.placa }}</span></h1>
+    <a class="btn btn--secundario" href="{{ object.get_absolute_url }}">Voltar</a>
+  </div>
+  {% include "partials/abas_vip.html" with aba="" %}
+
+  <div class="aviso"><p><strong>Registro concluído.</strong> Aqui você só acrescenta fotos de saída nas posições ainda vazias. Para trocar ou remover fotos, ou alterar outros dados, o registro precisa ser reaberto.</p></div>
+
+  <form method="post" enctype="multipart/form-data" novalidate class="cartao" data-vip-form>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="erro-geral" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+    {% include "vip_preparacao/fotos_grade.html" with itens=posicoes_saida %}
+    <div class="acoes">
+      <button type="submit" class="btn">Salvar fotos</button>
+      <a class="btn btn--secundario" href="{{ object.get_absolute_url }}">Cancelar</a>
+    </div>
+  </form>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/vip_form.js' %}"></script>{% endblock %}

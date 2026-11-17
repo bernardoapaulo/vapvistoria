@@ -1,0 +1,116 @@
+/* ==========================================================================
+   VAP Vistoria - módulo Vip/Preparação (lista, formulário, pop-ups, fotos). Só usa variáveis de tokens.css.
+   ========================================================================== */
+
+/* Etapas (etiquetas informativas; sempre com texto, e a atrasada também com ícone) */
+.etiqueta--etapa-aguardando { background: var(--cor-status-solicitado-fundo); color: var(--cor-status-solicitado); }
+.etiqueta--etapa-preparacao { background: var(--cor-status-em_andamento-fundo); color: var(--cor-status-em_andamento); }
+.etiqueta--etapa-vip { background: var(--cor-agenda-confirmado-fundo); color: var(--cor-agenda-confirmado); }
+.etiqueta--etapa-pronto { background: var(--cor-agenda-agendado-fundo); color: var(--cor-agenda-agendado); }
+.etiqueta--etapa-atrasada { background: var(--cor-status-cancelado-fundo); color: var(--cor-status-cancelado); }
+.etiqueta--etapa-concluido { background: var(--cor-pagto-pago-fundo); color: var(--cor-pagto-pago); }
+.etiqueta .icone { width: 0.9rem; height: 0.9rem; margin-right: var(--esp-xs); vertical-align: -0.15em; }
+tr.linha--atrasada td:first-child { box-shadow: inset 4px 0 0 var(--cor-saida); }
+.placa { font-family: var(--fonte-titulo); font-weight: 700; font-size: var(--titulo-3); letter-spacing: 0.06em; color: var(--cor-titulo); }
+.acoes--linha { flex-wrap: nowrap; }
+
+/* Histórico: pontos da linha do tempo */
+.linha-do-tempo__item--criacao::before { background: var(--marca-azul); }
+.linha-do-tempo__item--edicao::before { background: var(--cor-status-solicitado); }
+.linha-do-tempo__item--conclusao::before { background: var(--cor-pagto-pago); }
+.linha-do-tempo__item--reabertura::before { background: var(--cor-status-em_andamento); }
+.linha-do-tempo__item--fotos::before { background: var(--cor-agenda-confirmado); }
+
+/* Formulário */
+.grade-campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0 var(--esp-md); }
+.grade-campos .campo--larga { grid-column: 1 / -1; }
+.secao-form { margin: var(--esp-lg) 0 var(--esp-md); padding-bottom: var(--esp-sm); border-bottom: 1px solid var(--cor-borda); }
+.nota-preenchimento { color: var(--marca-menta); font-size: var(--texto-sm); margin-top: var(--esp-xs); }
+
+/* Campos que abrem um pop-up (cor, serviço): o <select> original continua no HTML e o JavaScript o esconde */
+.seletor-botao {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--esp-sm); width: 100%;
+  min-height: var(--toque); padding: 0.5rem 0.85rem; text-align: left; cursor: pointer;
+  border: 1px solid var(--vidro-borda); border-radius: var(--raio-sm); background: var(--cor-campo);
+  color: var(--cor-texto); font: inherit;
+}
+.seletor-botao:hover { border-color: var(--marca-prata); }
+.seletor-botao--vazio { color: var(--cor-texto-suave); }
+.amostra { display: inline-block; flex-shrink: 0; width: 1.25rem; height: 1.25rem; border-radius: 50%; border: 2px solid var(--marca-prata); vertical-align: middle; margin-right: var(--esp-sm); }
+.amostra--branco { background: var(--cor-veiculo-branco); }
+.amostra--preto { background: var(--cor-veiculo-preto); }
+.amostra--prata { background: var(--cor-veiculo-prata); }
+.amostra--cinza { background: var(--cor-veiculo-cinza); }
+.amostra--vermelho { background: var(--cor-veiculo-vermelho); }
+.amostra--azul { background: var(--cor-veiculo-azul); }
+.amostra--verde { background: var(--cor-veiculo-verde); }
+.amostra--amarelo { background: var(--cor-veiculo-amarelo); }
+.amostra--laranja { background: var(--cor-veiculo-laranja); }
+.amostra--marrom { background: var(--cor-veiculo-marrom); }
+.amostra--bege { background: var(--cor-veiculo-bege); }
+.amostra--dourado { background: var(--cor-veiculo-dourado); }
+.amostra--vinho { background: var(--cor-veiculo-vinho); }
+.amostra--outra { background: conic-gradient(var(--cor-veiculo-vermelho), var(--cor-veiculo-amarelo), var(--cor-veiculo-verde), var(--cor-veiculo-azul), var(--cor-veiculo-vermelho)); }
+.cores { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: var(--esp-sm); }
+.cores button, .lista-servicos button {
+  display: flex; align-items: center; width: 100%; min-height: var(--toque); padding: 0.4rem 0.75rem; cursor: pointer;
+  background: var(--cor-superficie-2); color: var(--cor-texto); font: inherit; text-align: left;
+  border: 1px solid var(--vidro-borda); border-radius: var(--raio-sm);
+}
+.cores button:hover, .lista-servicos button:hover { border-color: var(--marca-menta); background: var(--cor-superficie-3); }
+.cores button[aria-pressed="true"], .lista-servicos button[aria-pressed="true"] { border-color: var(--marca-menta); box-shadow: 0 0 0 2px var(--marca-menta); }
+.lista-servicos { list-style: none; margin: var(--esp-md) 0 0; padding: 0; display: grid; gap: var(--esp-sm); max-height: 50vh; overflow-y: auto; }
+.lista-servicos button { justify-content: space-between; gap: var(--esp-md); }
+.lista-servicos small { color: var(--cor-texto-suave); }
+
+/* Combobox de cliente (autocompletar) */
+.combo { position: relative; }
+.combo__lista {
+  position: absolute; z-index: 20; left: 0; right: 0; top: 100%; margin: 2px 0 0; padding: var(--esp-xs); list-style: none;
+  max-height: 16rem; overflow-y: auto; background: var(--cor-superficie); border: 1px solid var(--vidro-borda);
+  border-radius: var(--raio-sm); box-shadow: var(--vidro-sombra);
+}
+.combo__lista li { padding: 0.55rem 0.75rem; min-height: var(--toque); display: flex; align-items: center; cursor: pointer; border-radius: 6px; }
+.combo__lista li:hover, .combo__lista li[aria-selected="true"] { background: var(--cor-superficie-3); color: var(--cor-titulo); }
+.combo__vazio { color: var(--cor-texto-suave); cursor: default; }
+
+/* Pop-ups nativos (<dialog>): fecham com Esc; o foco fica preso dentro */
+.dialogo {
+  width: min(34rem, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); padding: var(--esp-lg); overflow-y: auto;
+  color: var(--cor-texto); background: var(--cor-superficie); border: 1px solid var(--vidro-borda); border-radius: var(--raio);
+  box-shadow: var(--vidro-sombra);
+}
+.dialogo::backdrop { background: rgba(0, 12, 20, 0.7); }
+.dialogo__cabecalho { display: flex; justify-content: space-between; align-items: center; gap: var(--esp-md); margin-bottom: var(--esp-md); }
+.dialogo__cabecalho h2 { margin: 0; }
+.dialogo--larga { width: min(60rem, calc(100vw - 2rem)); }
+
+/* Fotos: formulário */
+.fotos-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr)); gap: var(--esp-md); margin-bottom: var(--esp-lg); }
+.foto-campo { background: var(--cor-superficie-2); border: 1px solid var(--vidro-borda-fina); border-radius: var(--raio-sm); padding: var(--esp-sm); }
+.foto-campo--com-erro { border-color: var(--cor-erro); }
+.foto-campo__nome { display: block; font-weight: 600; font-size: var(--texto-sm); margin-bottom: var(--esp-xs); }
+.foto-campo__previa {
+  display: grid; place-items: center; aspect-ratio: 4 / 3; margin-bottom: var(--esp-sm); overflow: hidden; border-radius: 6px;
+  background: var(--cor-campo); color: var(--cor-texto-suave); font-size: var(--texto-xs); text-align: center;
+}
+.foto-campo__previa img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.foto-campo input[type="file"] { min-height: 0; padding: 0.35rem; font-size: var(--texto-xs); }
+.foto-campo__remover { display: flex; align-items: center; gap: var(--esp-xs); margin-top: var(--esp-xs); font-size: var(--texto-sm); min-height: var(--toque); }
+
+/* Fotos: galeria do detalhe (antes e depois lado a lado) */
+.comparativo { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: var(--esp-lg); }
+.galeria { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr)); gap: var(--esp-sm); }
+.galeria a { display: block; border-radius: 6px; overflow: hidden; border: 1px solid var(--vidro-borda-fina); }
+.galeria img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+.galeria span { display: block; font-size: var(--texto-xs); color: var(--cor-texto-suave); padding: 0.15rem 0.1rem; }
+.lightbox__imagem { display: block; max-width: 100%; max-height: 70vh; margin: 0 auto; border-radius: 6px; }
+.lightbox__legenda { text-align: center; color: var(--cor-texto-suave); margin: var(--esp-sm) 0; }
+.lightbox__controles { display: flex; justify-content: space-between; gap: var(--esp-sm); }
+
+@media screen and (max-width: 899px) {
+  .acoes--linha { flex-wrap: wrap; }
+}
+@media print {
+  .fotos-grade, .dialogo { display: none; }
+}

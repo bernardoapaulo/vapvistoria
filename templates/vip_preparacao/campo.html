@@ -1,0 +1,7 @@
+{# Um campo do formulário (rótulo, campo, ajuda e erros). Uso: include com campo=form.xxx [larga=1] [ajuda="texto"] #}
+<div class="campo{% if campo.errors %} campo--com-erro{% endif %}{% if larga %} campo--larga{% endif %}">
+  <label for="{{ campo.id_for_label }}">{{ campo.label }}{% if campo.field.required and not campo.field.disabled %} <span aria-hidden="true">*</span>{% endif %}</label>
+  {{ campo }}
+  {% if ajuda %}<div class="campo__ajuda">{{ ajuda }}</div>{% endif %}
+  {% for erro in campo.errors %}<div class="campo__erro">{{ erro }}</div>{% endfor %}
+</div>

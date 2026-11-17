@@ -12,7 +12,7 @@ from django.urls import reverse
 from contas.permissoes import ADMINISTRADOR, FUNCIONARIO
 
 ARQUIVOS_ESTATICOS = [
-    "css/tokens.css", "css/base.css", "css/modulos.css", "css/impressao.css",
+    "css/tokens.css", "css/base.css", "css/modulos.css", "css/vip.css", "css/impressao.css",
     "img/logo-vap.png", "img/logo-vap-clara.png", "img/favicon.ico", "img/favicon.png", "img/apple-touch-icon.png",
     "icons/sprite.svg", "icons/LICENSE-lucide.txt",
     "vendor/chartjs/chart.umd.min.js", "vendor/fullcalendar/index.global.min.js", "vendor/fullcalendar/pt-br.global.min.js",
@@ -62,11 +62,11 @@ class InterfaceTest(TestCase):
     def test_administrador_ve_as_telas_principais(self):
         self.client.force_login(self.admin)
         self._paginas(["inicio", "dashboard", "atendimento_lista", "agenda_calendario", "financeiro",
-                       "cliente_lista", "aluno_lista", "veiculo_lista", "servico_lista"])
+                       "cliente_lista", "aluno_lista", "veiculo_lista", "servico_lista", "vip_lista", "vip_novo"])
 
     def test_funcionario_ve_menu_sem_financeiro(self):
         self.client.force_login(self.func)
-        self._paginas(["inicio", "atendimento_lista", "agenda_calendario", "cliente_lista"])
+        self._paginas(["inicio", "atendimento_lista", "agenda_calendario", "cliente_lista", "vip_lista", "vip_novo"])
         html = self.client.get(reverse("inicio")).content.decode()
         self.assertNotIn(reverse("financeiro"), html)
         self.assertIn("Funcionário", html)
@@ -114,11 +114,11 @@ class InterfaceTest(TestCase):
     def test_css_organizado_e_sem_excessos(self):
         css = settings.BASE_DIR / "static" / "css"
         tokens = (css / "tokens.css").read_text(encoding="utf-8")
-        for arquivo in ("base.css", "modulos.css", "impressao.css"):
+        for arquivo in ("base.css", "modulos.css", "vip.css", "impressao.css"):
             texto = (css / arquivo).read_text(encoding="utf-8")
             # cores fixas ficam só no arquivo de tokens (exceto branco/transparências pontuais)
             self.assertNotRegex(re.sub(r"#fff\b|#FFF\b|#F2F2F2", "", texto), r"#[0-9A-Fa-f]{6}\b", arquivo)
-        todo = "".join((css / a).read_text(encoding="utf-8") for a in ("base.css", "modulos.css", "impressao.css"))
+        todo = "".join((css / a).read_text(encoding="utf-8") for a in ("base.css", "modulos.css", "vip.css", "impressao.css"))
         self.assertEqual(todo.count("!important"), 1)   # só o [hidden]
         self.assertIn("prefers-reduced-motion", todo)
         self.assertIn("@media print", tokens)           # a impressão troca os tokens para fundo branco

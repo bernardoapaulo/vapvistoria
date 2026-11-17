@@ -135,6 +135,13 @@
   --cor-forma-dinheiro: #7BD389; --cor-forma-pix: #4FD1D9; --cor-forma-cartao_debito: #5BB4DA;
   --cor-forma-cartao_credito: #B79CF0; --cor-forma-transferencia: #F2B35E;
 
+  /* ---- Cores de veículo (amostras do módulo Vip/Preparação; o NOME da cor sempre aparece escrito) ---- */
+  --cor-veiculo-branco: #F5F5F5;   --cor-veiculo-preto: #1A1A1A;   --cor-veiculo-prata: #C0C5CC;
+  --cor-veiculo-cinza: #7A828C;    --cor-veiculo-vermelho: #C62828; --cor-veiculo-azul: #1E5FBF;
+  --cor-veiculo-verde: #2E7D32;    --cor-veiculo-amarelo: #F2C200;  --cor-veiculo-laranja: #EF7A1A;
+  --cor-veiculo-marrom: #6D4C41;   --cor-veiculo-bege: #D8C3A5;     --cor-veiculo-dourado: #C9A227;
+  --cor-veiculo-vinho: #6D1A36;
+
   /* ---- Tipografia ---- */
   --fonte: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   --fonte-titulo: "Barlow Condensed", "Arial Narrow", "Inter", system-ui, sans-serif;

@@ -1,0 +1,1 @@
+{# Etapa calculada (informativa). Uso: include com r=registro. A atrasada leva ícone além do texto. #}<span class="etiqueta etiqueta--etapa-{{ r.etapa }}">{% if r.atrasado %}{% include "partials/icone.html" with nome="triangle-alert" %}{% endif %}{{ r.etapa_texto }}</span>

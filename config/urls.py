@@ -12,4 +12,5 @@ urlpatterns = [
     path("agenda/", include("agenda.urls")),
     path("dashboard/", include("dashboard.urls")),
     path("financeiro/", include("financeiro.urls")),
+    path("vip/", include("vip_preparacao.urls")),
 ]

@@ -1,0 +1,32 @@
+{# Pop-up de conclusão: lança o recebimento no Financeiro. Um só na página; o JavaScript (vip_comum.js) preenche a ação e o valor de cada botão [data-concluir]. Uso: include com pode_alterar_valor e hoje #}
+{% load l10n %}
+<dialog class="dialogo" id="dialogo-concluir" aria-labelledby="dialogo-concluir-titulo">
+  <div class="dialogo__cabecalho">
+    <h2 id="dialogo-concluir-titulo">Concluir e lançar recebimento</h2>
+    <button type="button" class="btn btn--fantasma btn--pequeno" data-fechar-dialogo aria-label="Fechar">{% include "partials/icone.html" with nome="x" %}</button>
+  </div>
+  <p class="campo__ajuda">Veículo <strong data-concluir-placa></strong>. Ao confirmar, o serviço é concluído e o valor é lançado como recebimento no Financeiro.</p>
+  <form method="post" action="" data-concluir-form>
+    {% csrf_token %}
+    <div class="campo">
+      <label for="concluir-valor">Valor recebido (R$)</label>
+      <input id="concluir-valor" type="number" name="valor" step="0.01" min="0" inputmode="decimal" {% if not pode_alterar_valor %}readonly aria-describedby="concluir-valor-ajuda"{% endif %}>
+      {% if not pode_alterar_valor %}<div class="campo__ajuda" id="concluir-valor-ajuda">Só o Administrador altera o valor.</div>{% endif %}
+    </div>
+    <div class="campo">
+      <label for="concluir-forma">Forma de pagamento</label>
+      <select id="concluir-forma" name="forma" required>
+        <option value="">Selecione...</option>
+        {% for valor, rotulo in formas %}<option value="{{ valor }}">{{ rotulo }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="campo">
+      <label for="concluir-data">Data do recebimento</label>
+      <input id="concluir-data" type="date" name="data" value="{{ hoje|date:'Y-m-d' }}" max="{{ hoje|date:'Y-m-d' }}">
+    </div>
+    <div class="acoes">
+      <button type="submit" class="btn">Concluir e lançar</button>
+      <button type="button" class="btn btn--secundario" data-fechar-dialogo>Cancelar</button>
+    </div>
+  </form>
+</dialog>

@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "agenda",
     "dashboard",
     "financeiro",
+    "vip_preparacao",
 ]
 
 MIDDLEWARE = [

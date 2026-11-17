@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% load static %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block conteudo %}
+  <div class="cabecalho-pagina">
+    <h1>{{ titulo }}</h1>
+    <a class="btn btn--secundario" href="{% if object %}{{ object.get_absolute_url }}{% else %}{% url 'vip_lista' %}{% endif %}">Cancelar</a>
+  </div>
+  {% include "partials/abas_vip.html" with aba=object|yesno:",novo" %}
+
+  {% if form.concluido %}
+    <div class="aviso"><p><strong>Registro concluído.</strong> Cliente, serviço e valor ficam travados porque já geraram o atendimento e o recebimento. Para alterá-los, reabra o registro.</p></div>
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data" novalidate class="cartao" data-vip-form data-url-veiculo="{% url 'vip_veiculo' %}">
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="erro-geral" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+
+    <div class="grade-campos">
+      {# Cliente: lista com busca (o JavaScript troca por um campo de busca; sem ele, é a lista comum) #}
+      <div class="campo campo--larga{% if form.cliente.errors %} campo--com-erro{% endif %}" data-cliente-campo>
+        <label for="{{ form.cliente.id_for_label }}">{{ form.cliente.label }} <span aria-hidden="true">*</span></label>
+        {{ form.cliente }}
+        <div class="campo__ajuda">
+          Digite para buscar entre os clientes cadastrados.
+          {% if perms.cadastros.add_cliente and not form.concluido %}<a href="{% url 'cliente_novo' %}?next={{ request.path|urlencode }}" data-novo-cliente>Cadastrar novo cliente</a>{% endif %}
+        </div>
+        {% for erro in form.cliente.errors %}<div class="campo__erro">{{ erro }}</div>{% endfor %}
+      </div>
+
+      {% include "vip_preparacao/campo.html" with campo=form.placa ajuda="Formato antigo (ABC1234) ou Mercosul (ABC1D23). Se a placa já estiver no cadastro de veículos, os dados são preenchidos." %}
+      {% include "vip_preparacao/campo.html" with campo=form.marca %}
+      {% include "vip_preparacao/campo.html" with campo=form.modelo %}
+      {% include "vip_preparacao/campo.html" with campo=form.versao %}
+
+      {# Cor: pop-up com amostras e o nome escrito #}
+      <div class="campo{% if form.cor.errors or form.cor_outra.errors %} campo--com-erro{% endif %}" data-cor-campo>
+        <label for="{{ form.cor.id_for_label }}">{{ form.cor.label }}</label>
+        {{ form.cor }}
+        <button type="button" class="seletor-botao seletor-botao--vazio" data-abrir-dialogo="dialogo-cor" hidden aria-haspopup="dialog" data-cor-botao>
+          <span data-cor-texto>Escolher a cor</span>{% include "partials/icone.html" with nome="chevron-down" %}
+        </button>
+        <div data-cor-outra-bloco {% if form.cor.value != "outra" %}hidden{% endif %}>
+          <label for="{{ form.cor_outra.id_for_label }}" class="so-leitor">{{ form.cor_outra.label }}</label>
+          {{ form.cor_outra }}
+        </div>
+        {% for erro in form.cor.errors %}<div class="campo__erro">{{ erro }}</div>{% endfor %}
+        {% for erro in form.cor_outra.errors %}<div class="campo__erro">{{ erro }}</div>{% endfor %}
+      </div>
+
+      {% include "vip_preparacao/campo.html" with campo=form.ano %}
+      {% include "vip_preparacao/campo.html" with campo=form.chassi ajuda="17 letras e números, sem I, O e Q (opcional)." %}
+
+      {# Serviço: pop-up com os serviços ativos, busca e valor padrão #}
+      <div class="campo campo--larga{% if form.servico.errors %} campo--com-erro{% endif %}" data-servico-campo>
+        <label for="{{ form.servico.id_for_label }}">{{ form.servico.label }} <span aria-hidden="true">*</span></label>
+        {{ form.servico }}
+        {% if not form.concluido %}
+        <button type="button" class="seletor-botao seletor-botao--vazio" data-abrir-dialogo="dialogo-servico" hidden aria-haspopup="dialog" data-servico-botao>
+          <span data-servico-texto>Escolher o serviço</span>{% include "partials/icone.html" with nome="chevron-down" %}
+        </button>
+        {% endif %}
+        {% for erro in form.servico.errors %}<div class="campo__erro">{{ erro }}</div>{% endfor %}
+      </div>
+
+      {% include "vip_preparacao/campo.html" with campo=form.data_preparacao ajuda="Data de entrada do veículo." %}
+      {% include "vip_preparacao/campo.html" with campo=form.data_vip ajuda="Data da lavagem/VIP." %}
+      {% include "vip_preparacao/campo.html" with campo=form.data_devolucao %}
+      {% include "vip_preparacao/campo.html" with campo=form.valor ajuda=form.valor_travado|yesno:"Preenchido pelo serviço. Só o Administrador altera o valor.,Preenchido pelo serviço; você pode ajustar." %}
+      {% include "vip_preparacao/campo.html" with campo=form.previsao_pagamento ajuda="Só uma previsão: não entra nos recebimentos nem no caixa." %}
+      {% include "vip_preparacao/campo.html" with campo=form.nota_fiscal %}
+    </div>
+
+    <h2 class="secao-form">Fotos de entrada</h2>
+    <p class="campo__ajuda">Opcionais. No celular, toque no campo para tirar a foto na hora ou escolher da galeria. As fotos são reduzidas e perdem a localização (GPS) ao serem salvas.</p>
+    {% include "vip_preparacao/fotos_grade.html" with itens=posicoes_entrada %}
+
+    <h2 class="secao-form">Fotos de saída</h2>
+    <p class="campo__ajuda">Normalmente enviadas depois, ao editar o registro na devolução.</p>
+    {% include "vip_preparacao/fotos_grade.html" with itens=posicoes_saida %}
+
+    <div class="grade-campos">
+      {% include "vip_preparacao/campo.html" with campo=form.observacao larga=1 %}
+    </div>
+
+    <div class="acoes">
+      <button type="submit" class="btn">Salvar</button>
+      <a class="btn btn--secundario" href="{% if object %}{{ object.get_absolute_url }}{% else %}{% url 'vip_lista' %}{% endif %}">Cancelar</a>
+    </div>
+  </form>
+
+  {# Pop-up de cor #}
+  <dialog class="dialogo" id="dialogo-cor" aria-labelledby="dialogo-cor-titulo">
+    <div class="dialogo__cabecalho">
+      <h2 id="dialogo-cor-titulo">Cor do veículo</h2>
+      <button type="button" class="btn btn--fantasma btn--pequeno" data-fechar-dialogo aria-label="Fechar">{% include "partials/icone.html" with nome="x" %}</button>
+    </div>
+    <ul class="cores">
+      {% for valor, nome in cores %}
+      <li><button type="button" data-cor-opcao="{{ valor }}" data-nome="{{ nome }}" aria-pressed="false"><span class="amostra amostra--{{ valor }}" aria-hidden="true"></span>{{ nome }}</button></li>
+      {% endfor %}
+    </ul>
+    <p class="campo__ajuda">Escolhendo "Outra", descreva a cor no campo que aparece.</p>
+  </dialog>
+
+  {# Pop-up de serviço #}
+  <dialog class="dialogo" id="dialogo-servico" aria-labelledby="dialogo-servico-titulo">
+    <div class="dialogo__cabecalho">
+      <h2 id="dialogo-servico-titulo">Serviço</h2>
+      <button type="button" class="btn btn--fantasma btn--pequeno" data-fechar-dialogo aria-label="Fechar">{% include "partials/icone.html" with nome="x" %}</button>
+    </div>
+    <div class="campo">
+      <label for="busca-servico">Buscar serviço</label>
+      <input id="busca-servico" type="search" data-busca-servico autocomplete="off" placeholder="Digite parte do nome">
+    </div>
+    <ul class="lista-servicos">
+      {% for s in servicos_modal %}
+      <li><button type="button" data-servico-opcao="{{ s.pk }}" data-nome="{{ s.nome }}" data-valor="{{ s.valor_padrao|stringformat:'s' }}" aria-pressed="false">
+        <span>{{ s.nome }}<br><small>{{ s.get_categoria_display }}</small></span><strong>R$ {{ s.valor_padrao|floatformat:"2g" }}</strong></button></li>
+      {% empty %}
+      <li class="vazio">Nenhum serviço ativo cadastrado. Cadastre em Serviços.</li>
+      {% endfor %}
+    </ul>
+  </dialog>
+{% endblock %}
+{% block scripts %}
+  <script src="{% static 'js/vip_comum.js' %}"></script>
+  <script src="{% static 'js/vip_form.js' %}"></script>
+{% endblock %}

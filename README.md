@@ -125,6 +125,19 @@ O projeto já tem `vercel.json` (roda `build.py`: migra o banco e, se pedido, ca
 
 Limites conhecidos: arquivos enviados (fotos e documentos de alunos, comprovantes) ficam em `/tmp` e **somem** quando a função é reciclada; para produção real, use um armazenamento externo (S3, Vercel Blob). Os arquivos estáticos são servidos pela CDN da Vercel.
 
+## Vip/Preparação (módulo)
+
+App `vip_preparacao/` (menu "Vip/Preparação", sub-abas **Todas** e **Novo**, para Administrador e Funcionário). Controla veículos que entram para lavagem/estética (VIP) e/ou preparação.
+
+- **Registro:** cliente, placa (antiga ou Mercosul, normalizada), marca/modelo/versão, cor (pop-up de amostras com o nome escrito), ano, chassi (17 caracteres sem I, O e Q), serviço (pop-up com os serviços ativos e o valor padrão), datas de preparação/VIP/devolução, valor, previsão de pagamento, nota fiscal e observação. Obrigatórios: cliente, placa, serviço e data de preparação. O registro guarda os próprios dados do veículo: **não prende o carro ao cliente** (um cliente pode ter vários carros).
+- **Etapa** (só etiqueta, calculada das datas): Aguardando preparação, Em preparação, VIP, Pronto para devolução (devolução hoje) e Devolução atrasada (devolução passou e não foi concluído). A regra está em `RegistroVip.etapa`.
+- **Concluir** = serviço feito e pagamento recebido. Em uma transação (`vip_preparacao/regras.py`): usa o Veículo da mesma placa (de qualquer cliente) ou o cria, cria o Atendimento concluído e pago (data = data de devolução, ou a do recebimento) e lança o Recebimento pelas regras do Financeiro (mês fechado bloqueia). Concluir duas vezes não duplica nada. Para concluir é preciso marca, modelo, ano e cor. **Reabrir** estorna o recebimento (fica registrado), reabre o atendimento e registra tudo no histórico; ao concluir de novo, o mesmo atendimento é reaproveitado.
+- **Previsão de pagamento** não entra em recebimentos, caixa nem resultado.
+- **Permissões** (em `contas/permissoes.py`): os dois perfis criam, editam, concluem, reabrem e excluem; **só o Administrador altera o valor e edita um registro já concluído** (o Funcionário só acrescenta fotos de saída). Registro que já gerou atendimento não pode ser excluído (use a reabertura). Tudo é conferido no servidor.
+- **Fotos** (10 de entrada e 10 de saída por registro): JPEG, PNG, WebP e **HEIC/HEIF (iPhone)**; o conteúdo é verificado com Pillow, a orientação é corrigida, a imagem é reduzida (lado maior 1920 px) e regravada em JPEG **sem EXIF (sem GPS)**, com miniatura. O navegador também reduz a foto antes de enviar (menos dados no celular). Limite por foto: 10 MB (`VIP_FOTO_MAX_MB`). No celular o campo oferece câmera ou galeria. Ficam em `arquivos_privados/vip/` com nome aleatório e só saem pela view `/vip/foto/<id>/<grande|mini>/`, que exige login e permissão.
+- **Armazenamento:** `vip_preparacao/armazenamento.py`. Local por padrão; para produção, `FOTOS_STORAGE=s3` (Cloudflare R2/S3; ver o cabeçalho do arquivo; precisa de `pip install django-storages[s3]`). Em hospedagem de disco temporário (Vercel), as fotos locais se perdem a cada deploy.
+- **Dados fictícios:** `python manage.py popular_dados` cria 15 registros (mistura de etapas, atrasados e 3 concluídos com recebimento), com fotos de exemplo geradas por código. Para recriar só esses: `python manage.py popular_dados --refazer-vip`.
+
 ## Estrutura
 
 ```
@@ -135,6 +148,7 @@ cadastros/   Cliente, Aluno, Veículo (modelos, formulários, validadores, views
 servicos/    Tipo de serviço
 atendimentos/ Atendimento, HistoricoAtendimento, regras, formulário e telas
 dashboard/   services.py (cálculos), periodos.py, graficos.py, views e CSV
+vip_preparacao/  Registro VIP/Preparação, fotos, histórico, regras.py (conclusão), fotos.py (Pillow), armazenamento.py
 financeiro/  Recebimento, Despesa, categorias, fechamento de mês, regras.py (gravações), services.py (cálculos), graficos.py
 agenda/      Agendamento, horário de funcionamento, regras (regras.py), calendário e pendências
 templates/   HTML (base.html tem o menu lateral)

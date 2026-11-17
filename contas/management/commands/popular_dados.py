@@ -16,6 +16,7 @@ from cadastros.models import Aluno, Cliente, Veiculo
 from contas.permissoes import ADMINISTRADOR, FUNCIONARIO, criar_grupos
 from financeiro.dados_ficticios import gerar_despesas
 from servicos.models import TipoServico
+from vip_preparacao.dados_ficticios import gerar_registros_vip
 
 CATEGORIA = TipoServico.Categoria
 
@@ -114,6 +115,10 @@ class Command(BaseCommand):
         )
 
         parser.add_argument(
+            "--refazer-vip", action="store_true",
+            help="Apaga TODOS os registros de VIP/Preparação (com as fotos e os atendimentos que geraram) e gera os fictícios de novo.",
+        )
+        parser.add_argument(
             "--refazer-financeiro", action="store_true",
             help="Apaga TODAS as despesas, fechamentos de mês e auditoria deles e gera os fictícios de novo.",
         )
@@ -183,6 +188,12 @@ class Command(BaseCommand):
             self.stdout.write(f"{despesas} despesas fictícias geradas (e 2 meses fechados).")
         else:
             self.stdout.write("Despesas já existem; nada foi alterado (use --refazer-financeiro para recriar).")
+
+        registros = gerar_registros_vip(usuarios, refazer=options["refazer_vip"])
+        if registros:
+            self.stdout.write(f"{registros} registros de VIP/Preparação fictícios gerados (com fotos de exemplo).")
+        else:
+            self.stdout.write("Registros de VIP/Preparação já existem; nada foi alterado (use --refazer-vip para recriar).")
 
         self.stdout.write(self.style.SUCCESS("Dados fictícios criados."))
         self.stdout.write("Usuários de teste:")

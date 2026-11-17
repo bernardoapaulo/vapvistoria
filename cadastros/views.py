@@ -3,6 +3,7 @@ from django.db.models import Count
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 
 from agenda.models import Agendamento
@@ -54,6 +55,13 @@ class ClienteCriar(CriarCrud):
     model = Cliente
     form_class = ClienteForm
     extra_context = {"titulo": "Novo cliente", "url_voltar": reverse_lazy("cliente_lista")}
+
+    def get_success_url(self):
+        """Quem veio de outra tela (ex.: formulário de VIP/Preparação) volta para ela, com o cliente escolhido."""
+        destino = self.request.GET.get("next", "")
+        if destino and url_has_allowed_host_and_scheme(destino, allowed_hosts={self.request.get_host()}):
+            return f"{destino.split('?')[0]}?cliente={self.object.pk}"
+        return super().get_success_url()
 
 
 class ClienteEditar(EditarCrud):

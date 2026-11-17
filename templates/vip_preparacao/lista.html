@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% load static l10n %}
+{% block titulo %}Vip/Preparação{% endblock %}
+{% block conteudo %}
+  <div class="cabecalho-pagina">
+    <h1>Vip/Preparação</h1>
+    {% if perms.vip_preparacao.add_registrovip %}<a class="btn" href="{% url 'vip_novo' %}">{% include "partials/icone.html" with nome="plus" %}Novo registro</a>{% endif %}
+  </div>
+  {% include "partials/abas_vip.html" with aba="todas" %}
+
+  <form method="get" class="cartao filtros">
+    <div class="filtros__grade">
+      <div class="campo"><label for="f-q">Busca</label>
+        <input id="f-q" type="search" name="q" value="{{ termo }}" placeholder="Placa, modelo, cliente ou nota fiscal"></div>
+      <div class="campo"><label for="f-status">Status</label>
+        <select id="f-status" name="status">
+          {% for v, r in status_opcoes %}<option value="{{ v }}" {% if v == status_atual %}selected{% endif %}>{{ r }}</option>{% endfor %}
+          <option value="todos" {% if status_atual == "todos" %}selected{% endif %}>Todos</option>
+        </select></div>
+      <div class="campo"><label for="f-etapa">Etapa</label>
+        <select id="f-etapa" name="etapa"><option value="">Todas</option>
+          {% for v, r in etapa_opcoes %}<option value="{{ v }}" {% if v == f.etapa %}selected{% endif %}>{{ r }}</option>{% endfor %}
+        </select></div>
+      <div class="campo"><label for="f-cliente">Cliente</label>
+        <select id="f-cliente" name="cliente"><option value="">Todos</option>
+          {% for c in clientes %}<option value="{{ c.pk }}" {% if c.pk|stringformat:"s" == f.cliente %}selected{% endif %}>{{ c.nome }}</option>{% endfor %}
+        </select></div>
+      <div class="campo"><label for="f-servico">Serviço</label>
+        <select id="f-servico" name="servico"><option value="">Todos</option>
+          {% for s in servicos %}<option value="{{ s.pk }}" {% if s.pk|stringformat:"s" == f.servico %}selected{% endif %}>{{ s.nome }}</option>{% endfor %}
+        </select></div>
+      <div class="campo"><label for="f-campo-data">Filtrar período por</label>
+        <select id="f-campo-data" name="campo_data">
+          {% for v, r in campos_data %}<option value="{{ v }}" {% if v == f.campo_data %}selected{% endif %}>{{ r }}</option>{% endfor %}
+        </select></div>
+      <div class="campo"><label for="f-de">De</label><input id="f-de" type="date" name="de" value="{{ f.de }}"></div>
+      <div class="campo"><label for="f-ate">Até</label><input id="f-ate" type="date" name="ate" value="{{ f.ate }}"></div>
+      <div class="campo"><label for="f-ordem">Ordenar por</label>
+        <select id="f-ordem" name="ordem">
+          {% for v, r in ordens %}<option value="{{ v }}" {% if v == f.ordem %}selected{% endif %}>{{ r }}</option>{% endfor %}
+        </select></div>
+    </div>
+    <div class="acoes">
+      <button type="submit" class="btn">Filtrar</button>
+      <a class="btn btn--secundario" href="{% url 'vip_lista' %}">Limpar</a>
+    </div>
+  </form>
+
+  <div class="cartao tabela-wrap">
+    {% if object_list %}
+    <table class="responsiva">
+      <thead><tr><th>Placa</th><th>Veículo</th><th>Cliente</th><th>Serviço</th><th>Etapa</th><th>Preparação</th><th>VIP</th><th>Devolução</th><th class="numero">Valor</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        {% for r in object_list %}
+        <tr{% if r.atrasado %} class="linha--atrasada"{% endif %}>
+          <td data-rotulo="Placa"><a class="placa" href="{{ r.get_absolute_url }}">{{ r.placa }}</a></td>
+          <td data-rotulo="Veículo">{{ r.veiculo_texto|default:"—" }}</td>
+          <td data-rotulo="Cliente"><strong>{{ r.cliente.nome }}</strong></td>
+          <td data-rotulo="Serviço">{{ r.servico.nome }}</td>
+          <td data-rotulo="Etapa">{% include "vip_preparacao/etiqueta_etapa.html" %}</td>
+          <td data-rotulo="Preparação">{{ r.data_preparacao|date:"d/m/Y" }}</td>
+          <td data-rotulo="VIP">{{ r.data_vip|date:"d/m/Y"|default:"—" }}</td>
+          <td data-rotulo="Devolução">{{ r.data_devolucao|date:"d/m/Y"|default:"—" }}</td>
+          <td data-rotulo="Valor" class="numero">R$ {{ r.valor|floatformat:"2g" }}</td>
+          <td data-rotulo="Status"><span class="etiqueta {% if r.concluido %}etiqueta--ativo{% endif %}">{{ r.get_status_display }}</span></td>
+          <td>
+            <div class="acoes acoes--linha">
+              {% if pode_concluir and not r.concluido %}
+                <button type="button" class="btn btn--pequeno" data-concluir data-url="{% url 'vip_concluir' r.pk %}" data-placa="{{ r.placa }}" data-valor="{{ r.valor|unlocalize }}">Marcar como concluído</button>
+              {% endif %}
+              <a class="btn btn--secundario btn--pequeno" href="{{ r.get_absolute_url }}">Ver detalhes</a>
+              {% if pode_editar %}<a class="btn btn--secundario btn--pequeno" href="{% url 'vip_editar' r.pk %}">Editar</a>{% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <div class="vazio">
+        <p>Nenhum registro encontrado{% if status_atual == "em_andamento" %} em andamento{% endif %}.</p>
+        <p>{% if status_atual == "em_andamento" %}Altere o status do filtro para ver os concluídos, ou {% endif %}cadastre o primeiro veículo que entrou para VIP ou preparação.</p>
+        {% if perms.vip_preparacao.add_registrovip %}<a class="btn" href="{% url 'vip_novo' %}">Cadastrar em "Novo"</a>{% endif %}
+      </div>
+    {% endif %}
+  </div>
+  {% include "partials/paginacao.html" %}
+
+  {% include "vip_preparacao/dialogo_concluir.html" %}
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/vip_comum.js' %}"></script>{% endblock %}
