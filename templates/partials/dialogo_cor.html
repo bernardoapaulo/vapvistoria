@@ -1,0 +1,13 @@
+{# Pop-up de cor (amostras com o NOME escrito). Compartilhado por Vip/Preparação e Regravações. Uso: include com cores=<lista (valor, nome)> #}
+<dialog class="dialogo" id="dialogo-cor" aria-labelledby="dialogo-cor-titulo">
+  <div class="dialogo__cabecalho">
+    <h2 id="dialogo-cor-titulo">Cor do veículo</h2>
+    <button type="button" class="btn btn--fantasma btn--pequeno" data-fechar-dialogo aria-label="Fechar">{% include "partials/icone.html" with nome="x" %}</button>
+  </div>
+  <ul class="cores">
+    {% for valor, nome in cores %}
+    <li><button type="button" data-cor-opcao="{{ valor }}" data-nome="{{ nome }}" aria-pressed="false"><span class="amostra amostra--{{ valor }}" aria-hidden="true"></span>{{ nome }}</button></li>
+    {% endfor %}
+  </ul>
+  <p class="campo__ajuda">Escolhendo "Outra", descreva a cor no campo que aparece.</p>
+</dialog>

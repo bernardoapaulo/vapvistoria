@@ -2,9 +2,10 @@
 Apaga os dados de TESTE e deixa o sistema pronto para uso.
 
 APAGA: clientes, alunos (e documentos), veículos, atendimentos (e histórico), agendamentos, recebimentos, despesas
-(e comprovantes), fechamentos de mês, auditoria, registros de Vip/Preparação (e fotos) e os tipos de serviço.
-MANTÉM: usuários (menos "funcionario_teste", o usuário fictício), grupos e permissões, categorias de despesa e o
-horário de funcionamento.
+(e comprovantes), fechamentos de mês, auditoria, registros de Vip/Preparação (e fotos), regravações (anexos, documentos
+emitidos, parceiros e técnicos) e os tipos de serviço.
+MANTÉM: usuários (menos "funcionario_teste", o usuário fictício), grupos e permissões, categorias de despesa, horário de
+funcionamento e a configuração da empresa (só a empresa de EXEMPLO é apagada).
 
 Segurança: sem --confirmar só MOSTRA o que seria apagado. Com --somente-se-ficticio (usado no deploy da Vercel) o
 comando só age se os dados fictícios do `popular_dados` ainda existirem; depois de limpo, vira um "nada a fazer" e
@@ -25,6 +26,10 @@ from contas.management.commands.popular_dados import CLIENTES
 from django.contrib.auth import get_user_model
 from financeiro.models import Despesa, FechamentoMes, Recebimento, RegistroAuditoria
 from servicos.models import TipoServico
+from regravacoes.models import (
+    AnexoRegravacao, ConfiguracaoEmpresa, DocumentoEmitido, HistoricoRegravacao, Parceiro, RegistroRegravacao,
+    SequenciaDocumento, Tecnico,
+)
 from vip_preparacao.models import FotoVip, HistoricoVip, ItemServicoVip, RegistroVip
 
 USUARIO_FICTICIO = "funcionario_teste"
@@ -34,6 +39,9 @@ NOMES_FICTICIOS = [c[0] for c in CLIENTES]
 ETAPAS = [
     ("Fotos de Vip/Preparação", FotoVip), ("Itens de serviço do Vip", ItemServicoVip),
     ("Histórico do Vip", HistoricoVip), ("Registros de Vip/Preparação", RegistroVip),
+    ("Documentos emitidos (PDF)", DocumentoEmitido), ("Numeração dos documentos", SequenciaDocumento),
+    ("Anexos de regravação", AnexoRegravacao), ("Histórico de regravações", HistoricoRegravacao),
+    ("Regravações", RegistroRegravacao), ("Parceiros indicadores", Parceiro), ("Técnicos responsáveis", Tecnico),
     ("Agendamentos", Agendamento), ("Recebimentos", Recebimento), ("Despesas", Despesa),
     ("Fechamentos de mês", FechamentoMes), ("Auditoria do financeiro", RegistroAuditoria),
     ("Histórico de atendimentos", HistoricoAtendimento), ("Atendimentos", Atendimento),
@@ -89,6 +97,8 @@ class Command(BaseCommand):
                 armazenamento.delete(nome)
             except Exception:
                 pass
+        # a empresa de EXEMPLO do popular_dados volta ao branco; uma empresa REAL (já configurada) fica como está
+        ConfiguracaoEmpresa.objects.filter(razao_social__startswith="[EXEMPLO]").delete()
         self._reiniciar_numeracao([m for _, m, _ in contagens])
         self.stdout.write(self.style.SUCCESS("Dados de teste apagados. O sistema está pronto para uso."))
 

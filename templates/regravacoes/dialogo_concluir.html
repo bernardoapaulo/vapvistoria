@@ -1,0 +1,29 @@
+{# Pop-up "Concluir / receber". Um só na página; regravacoes_comum.js preenche a ação e os campos de cada botão [data-concluir-reg]. #}
+<dialog class="dialogo" id="dialogo-concluir-reg" aria-labelledby="dialogo-concluir-reg-titulo">
+  <div class="dialogo__cabecalho">
+    <h2 id="dialogo-concluir-reg-titulo">Concluir e receber</h2>
+    <button type="button" class="btn btn--fantasma btn--pequeno" data-fechar-dialogo aria-label="Fechar">{% include "partials/icone.html" with nome="x" %}</button>
+  </div>
+  <p class="campo__ajuda">Veículo <strong data-reg-placa></strong>. Concluída (com data do serviço e técnico) <em>e</em> recebida, a regravação é lançada no Financeiro automaticamente.</p>
+  <form method="post" action="" data-reg-form>
+    {% csrf_token %}
+    <input type="hidden" name="voltar" value="">
+    <div class="campo"><label for="reg-data-concluida">Data do serviço concluído</label><input id="reg-data-concluida" type="date" name="data_concluida" max="{{ hoje|date:'Y-m-d' }}"></div>
+    <div class="campo"><label for="reg-tecnico">Técnico responsável</label>
+      <select id="reg-tecnico" name="tecnico"><option value="">Selecione...</option>{% for t in tecnicos_ativos %}<option value="{{ t.pk }}">{{ t.nome }}</option>{% endfor %}</select></div>
+    <fieldset class="campo">
+      <legend>Recebimento</legend>
+      <label><input type="radio" name="situacao" value="pendente"> Pendente</label>
+      <label><input type="radio" name="situacao" value="recebido"> Recebido</label>
+    </fieldset>
+    <div data-reg-recebido>
+      <div class="campo"><label for="reg-forma">Forma de pagamento</label>
+        <select id="reg-forma" name="forma"><option value="">Selecione...</option>{% for valor, rotulo in formas %}<option value="{{ valor }}">{{ rotulo }}</option>{% endfor %}</select></div>
+      <div class="campo"><label for="reg-data-recebimento">Data do recebimento</label><input id="reg-data-recebimento" type="date" name="data_recebimento" max="{{ hoje|date:'Y-m-d' }}"></div>
+    </div>
+    <div class="acoes">
+      <button type="submit" class="btn">Salvar</button>
+      <button type="button" class="btn btn--secundario" data-fechar-dialogo>Cancelar</button>
+    </div>
+  </form>
+</dialog>

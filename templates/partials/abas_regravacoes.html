@@ -1,0 +1,6 @@
+{# Navegação interna de Regravações (mesmo componente .abas do Financeiro e do Vip). Uso: include com aba="todas|novo|empresa" #}
+<nav class="abas nao-imprimir" aria-label="Seções de Regravações">
+  <a href="{% url 'regravacao_lista' %}" class="{% if aba == 'todas' %}ativo{% endif %}"{% if aba == 'todas' %} aria-current="page"{% endif %}>Todas</a>
+  {% if perms.regravacoes.add_registroregravacao %}<a href="{% url 'regravacao_novo' %}" class="{% if aba == 'novo' %}ativo{% endif %}"{% if aba == 'novo' %} aria-current="page"{% endif %}>Novo</a>{% endif %}
+  {% if perms.regravacoes.change_configuracaoempresa %}<a href="{% url 'empresa' %}" class="{% if aba == 'empresa' %}ativo{% endif %}"{% if aba == 'empresa' %} aria-current="page"{% endif %}>Empresa</a>{% endif %}
+</nav>

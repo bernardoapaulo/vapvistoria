@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% load static %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block conteudo %}
+  <div class="cabecalho-pagina">
+    <h1>{{ titulo }}</h1>
+    <a class="btn btn--secundario" href="{% if object %}{{ object.get_absolute_url }}{% else %}{% url 'regravacao_lista' %}{% endif %}">Cancelar</a>
+  </div>
+  {% include "partials/abas_regravacoes.html" with aba=object|yesno:",novo" %}
+
+  <form method="post" enctype="multipart/form-data" novalidate class="cartao" data-reg-formulario data-url-veiculo="{% url 'regravacao_veiculo' %}">
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="erro-geral" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+
+    <h2 class="secao-form">Indicação e cliente</h2>
+    <div class="grade-campos">
+      <div class="campo campo--larga{% if form.parceiro.errors %} campo--com-erro{% endif %}" data-parceiro-campo>
+        <label for="{{ form.parceiro.id_for_label }}">{{ form.parceiro.label }}</label>
+        {{ form.parceiro }}
+        <div class="campo__ajuda">Opcional: o cliente pode não ter vindo por indicação. Digite para buscar.
+          {% if pode_gerenciar_parceiros %}<a href="{% url 'parceiro_novo' %}?next={{ request.path|urlencode }}" data-novo-parceiro>Cadastrar novo parceiro</a>{% endif %}</div>
+        {% for erro in form.parceiro.errors %}<div class="campo__erro">{{ erro }}</div>{% endfor %}
+      </div>
+      <div class="campo campo--larga{% if form.cliente.errors %} campo--com-erro{% endif %}" data-cliente-campo>
+        <label for="{{ form.cliente.id_for_label }}">{{ form.cliente.label }} <span aria-hidden="true">*</span></label>
+        {{ form.cliente }}
+        <div class="campo__ajuda">Digite para buscar entre os clientes cadastrados.
+          {% if perms.cadastros.add_cliente %}<a href="{% url 'cliente_novo' %}?next={{ request.path|urlencode }}" data-novo-cliente>Cadastrar novo cliente</a>{% endif %}</div>
+        {% for erro in form.cliente.errors %}<div class="campo__erro">{{ erro }}</div>{% endfor %}
+      </div>
+    </div>
+
+    <h2 class="secao-form">Veículo</h2>
+    <div class="grade-campos">
+      {% include "vip_preparacao/campo.html" with campo=form.placa ajuda="Formato antigo (ABC1234) ou Mercosul (ABC1D23). Se a placa já estiver no cadastro de veículos, os dados são preenchidos." %}
+      {% include "vip_preparacao/campo.html" with campo=form.marca %}
+      {% include "vip_preparacao/campo.html" with campo=form.modelo %}
+      {% include "vip_preparacao/campo.html" with campo=form.ano_modelo ajuda="Ano de fabricação/ano do modelo, ex.: 2011/2012." %}
+      <div class="campo{% if form.cor.errors or form.cor_outra.errors %} campo--com-erro{% endif %}" data-cor-campo>
+        <label for="{{ form.cor.id_for_label }}">{{ form.cor.label }}</label>
+        {{ form.cor }}
+        <button type="button" class="seletor-botao seletor-botao--vazio" data-abrir-dialogo="dialogo-cor" hidden aria-haspopup="dialog" data-cor-botao>
+          <span data-cor-texto>Escolher a cor</span>{% include "partials/icone.html" with nome="chevron-down" %}
+        </button>
+        <div data-cor-outra-bloco {% if form.cor.value != "outra" %}hidden{% endif %}>
+          <label for="{{ form.cor_outra.id_for_label }}" class="so-leitor">{{ form.cor_outra.label }}</label>
+          {{ form.cor_outra }}
+        </div>
+        {% for erro in form.cor.errors %}<div class="campo__erro">{{ erro }}</div>{% endfor %}
+        {% for erro in form.cor_outra.errors %}<div class="campo__erro">{{ erro }}</div>{% endfor %}
+      </div>
+      {% include "vip_preparacao/campo.html" with campo=form.chassi ajuda="17 letras e números, sem I, O e Q." %}
+      {% include "vip_preparacao/campo.html" with campo=form.numero_motor ajuda="Obrigatório para a declaração quando houver regravação de motor." %}
+    </div>
+
+    <h2 class="secao-form">Proprietário</h2>
+    <div class="grade-campos">
+      <div class="campo campo--larga campo--check">
+        {{ form.proprietario_e_cliente }} <label for="{{ form.proprietario_e_cliente.id_for_label }}">{{ form.proprietario_e_cliente.label }}</label>
+        <div class="campo__ajuda">O proprietário é quem consta no documento do veículo e aparece na declaração. Marcando, o campo abaixo é preenchido com o cliente e travado; a declaração mostra "Solicitante: O MESMO".</div>
+      </div>
+      {% include "vip_preparacao/campo.html" with campo=form.proprietario larga=1 %}
+    </div>
+
+    <h2 class="secao-form">Serviço e datas</h2>
+    <div class="grade-campos">
+      <fieldset class="campo campo--larga{% if form.servico_motor.errors %} campo--com-erro{% endif %}">
+        <legend>Serviço <span aria-hidden="true">*</span></legend>
+        <label class="servico-opcao"><span>{{ form.servico_motor }} Regravação de Motor</span></label>
+        <label class="servico-opcao"><span>{{ form.servico_chassi }} Regravação de Chassi</span></label>
+        <div class="campo__ajuda">Marque um ou os dois. Define quais autorizações são exigidas e o texto dos documentos.</div>
+        {% for erro in form.servico_motor.errors %}<div class="campo__erro">{{ erro }}</div>{% endfor %}
+      </fieldset>
+      {% include "vip_preparacao/campo.html" with campo=form.data_agendada %}
+      {% include "vip_preparacao/campo.html" with campo=form.data_concluida ajuda="Com a data e o técnico, a regravação passa a Concluída." %}
+      {% include "vip_preparacao/campo.html" with campo=form.valor ajuda=pode_alterar_valor|yesno:"Digite o valor combinado.,Só o Administrador define o valor." %}
+      <div class="campo{% if form.tecnico.errors %} campo--com-erro{% endif %}">
+        <label for="{{ form.tecnico.id_for_label }}">{{ form.tecnico.label }}</label>
+        {{ form.tecnico }}
+        {% if pode_gerenciar_tecnicos %}<div class="campo__ajuda"><a href="{% url 'tecnico_novo' %}?next={{ request.path|urlencode }}" data-novo-tecnico>Cadastrar técnico</a></div>{% endif %}
+        {% for erro in form.tecnico.errors %}<div class="campo__erro">{{ erro }}</div>{% endfor %}
+      </div>
+    </div>
+
+    <h2 class="secao-form">Recebimento</h2>
+    <div class="grade-campos">
+      <fieldset class="campo{% if form.recebimento_situacao.errors %} campo--com-erro{% endif %}">
+        <legend>Situação</legend>
+        {{ form.recebimento_situacao }}
+      </fieldset>
+      {% include "vip_preparacao/campo.html" with campo=form.forma_pagamento ajuda="Obrigatória quando Recebido." %}
+      {% include "vip_preparacao/campo.html" with campo=form.data_recebimento ajuda="Obrigatória quando Recebido." %}
+    </div>
+    <p class="campo__ajuda">Quando a regravação estiver <strong>concluída e recebida</strong>, ela é lançada no Financeiro (atendimento e recebimento) automaticamente.</p>
+
+    <h2 class="secao-form">Documentos anexados</h2>
+    <p class="campo__ajuda">PDF, JPEG, PNG ou WebP, até 10 MB. As autorizações podem ser anexadas depois, mas a Declaração só é emitida com a autorização do serviço feito. No celular, o campo oferece câmera ou arquivos.</p>
+    <div class="anexos-grade">
+      {% for item in campos_anexos %}
+      <div class="anexo-campo{% if item.campo.errors %} anexo-campo--com-erro{% endif %}" data-anexo-campo data-tipo-anexo="{{ item.tipo }}">
+        <label class="anexo-campo__nome" for="{{ item.campo.id_for_label }}">{{ item.rotulo }}
+          <span class="etiqueta etiqueta--pendente" data-anexo-exigido {% if not item.exigido %}hidden{% endif %}>{% include "partials/icone.html" with nome="paperclip" %}exigida</span></label>
+        <div class="foto-campo__previa" data-previa>
+          {% if item.anexo %}
+            {% if item.anexo.e_imagem %}<img src="{% url 'anexo_baixar' item.anexo.pk 'mini' %}" alt="Anexo atual: {{ item.rotulo }}" width="320" height="240" loading="lazy">
+            {% else %}{% include "partials/icone.html" with nome="file-text" %} {{ item.anexo.nome_original|default:"PDF anexado" }}{% endif %}
+          {% else %}Nenhum arquivo{% endif %}
+        </div>
+        {{ item.campo }}
+        {% for erro in item.campo.errors %}<div class="campo__erro">{{ erro }}</div>{% endfor %}
+        {% if item.anexo %}
+          <a class="btn btn--fantasma btn--pequeno" href="{% url 'anexo_baixar' item.anexo.pk 'arquivo' %}" target="_blank" rel="noopener">Abrir atual</a>
+          <label class="foto-campo__remover">{{ item.remover }} Remover este arquivo</label>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="grade-campos">{% include "vip_preparacao/campo.html" with campo=form.observacao larga=1 %}</div>
+
+    <div class="acoes">
+      <button type="submit" class="btn">Salvar</button>
+      <a class="btn btn--secundario" href="{% if object %}{{ object.get_absolute_url }}{% else %}{% url 'regravacao_lista' %}{% endif %}">Cancelar</a>
+    </div>
+  </form>
+
+  {% include "partials/dialogo_cor.html" %}
+{% endblock %}
+{% block scripts %}
+  <script src="{% static 'js/vip_comum.js' %}"></script>
+  <script src="{% static 'js/vap_form.js' %}"></script>
+  <script src="{% static 'js/regravacoes_form.js' %}"></script>
+{% endblock %}

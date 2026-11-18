@@ -106,6 +106,8 @@ def gerar_atendimentos(usuarios, quantidade=320, refazer=False):
         # Registros de VIP/Preparação concluídos protegem o atendimento que geraram: saem primeiro.
         from vip_preparacao.dados_ficticios import apagar_registros
         apagar_registros()
+        from regravacoes.dados_ficticios import apagar_registros as apagar_regravacoes
+        apagar_regravacoes()
         # Agendamentos protegem o atendimento: saem primeiro (a agenda é refeita depois).
         from agenda.models import Agendamento
         Agendamento.objects.all().delete()

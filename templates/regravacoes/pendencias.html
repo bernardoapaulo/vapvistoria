@@ -1,0 +1,3 @@
+{# Indicador "documentos pendentes" por ícone e texto. Uso: include com r=registro (use prefetch_related("anexos")) #}
+{% if r.anexos_pendentes %}<span class="etiqueta etiqueta--pendente" title="Falta anexar: {% for t in r.anexos_pendentes %}{{ t }}{% if not forloop.last %}, {% endif %}{% endfor %}">{% include "partials/icone.html" with nome="paperclip" %}{{ r.anexos_pendentes|length }} pendente{{ r.anexos_pendentes|length|pluralize }}</span>
+{% elif r.anexos_exigidos %}<span class="etiqueta etiqueta--ativo">{% include "partials/icone.html" with nome="check" %}Completos</span>{% else %}—{% endif %}

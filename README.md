@@ -157,6 +157,20 @@ Pelo painel `/admin/`, como **Administrador** (conta com "Membro da equipe" marc
 
 `python manage.py limpar_dados_teste` mostra o que seria apagado; com `--confirmar` apaga clientes, alunos, veículos, atendimentos, agendamentos, recebimentos, despesas, fechamentos, auditoria, registros Vip (com fotos) e os tipos de serviço. **Fica** o resto: usuários (menos o fictício `funcionario_teste`), grupos, categorias de despesa e horário de funcionamento. Na Vercel: defina `LIMPAR_DADOS_TESTE=SIM`, faça *Redeploy* e depois apague a variável (o comando só age se os dados fictícios ainda existirem, então deixá-la ligada não apaga dados reais). Não deixe `CARREGAR_DADOS_FICTICIOS` ligada junto. Depois da limpeza, cadastre os serviços reais em **Serviços**.
 
+## Regravações (módulo só do Administrador)
+
+App `regravacoes/` (menu **Regravações**, **Parceiros** e **Técnicos**; abas **Todas**, **Novo** e **Empresa**). Registra solicitações de regravação de motor e/ou chassi e emite a **Declaração de Serviço** e o **Recibo de Pagamento** em PDF. Por padrão **só o Administrador** vê o módulo (central de acesso: `ACESSO_POR_PERFIL`); para liberar ao Funcionário, acrescente `"regravacoes"` à lista dele. Se liberar, ele já tem guardadas as permissões finas: vê, cria, edita, conclui/recebe e emite documentos; **não** altera valor, não gerencia técnicos, parceiros nem empresa, não exclui, não reabre e não edita o que já foi lançado (`REGRAVACAO_EXTRAS_*` em `contas/permissoes.py`).
+
+- **Registro:** parceiro indicador (opcional), cliente indicado, veículo (placa antiga ou Mercosul, preenchida pelo cadastro de veículos; ano/modelo AAAA/AAAA; cor pelo mesmo pop-up do Vip; chassi de 17 caracteres; número do motor), proprietário (como consta no documento; marca "o proprietário é o próprio cliente"), serviço (motor, chassi ou os dois), datas, valor (em branco, só o Administrador define), técnico e recebimento (Pendente ou Recebido, com forma e data).
+- **Status (calculado):** Cancelada > Concluída (data do serviço + técnico) > Agendada (data agendada) > Solicitada. Sem sincronização com a Agenda por enquanto.
+- **Parceiro e clientes indicados:** o parceiro fica em cada regravação. A tela do parceiro mostra quantos **clientes** ele indicou (sem repetir), as regravações (sem canceladas) e, para o Administrador, o total faturado nas concluídas e recebidas, com filtro por período. Não há comissão.
+- **Financeiro:** **concluída e recebida** lança, numa transação atômica, o Atendimento concluído e pago (um só, com o valor total) e o Recebimento, igual ao Vip. Tipo de serviço usado: o que você escolher na aba **Empresa** para motor, chassi e motor+chassi (botão "Criar os 3 tipos de serviço padrão" se não existirem). Não duplica, respeita mês fechado e cria o Veículo se faltar. **Reabrir** (só Administrador) estorna o recebimento e reabre o atendimento; concluída e recebida fica travada.
+- **Anexos:** Autorização de Motor e de Chassi (exigidas conforme o serviço), Documento do Veículo, Laudo ECV e Recibo anexado. PDF, JPEG, PNG ou WebP até 10 MB (`REGRAVACAO_ANEXO_MAX_MB`); o conteúdo é verificado de verdade (PDF com `pypdf`, sem scripts; imagem com Pillow, sem EXIF/GPS, orientação corrigida). Ficam no armazenamento privado (o mesmo do Vip: local ou S3 por variável de ambiente), com nome aleatório, e só saem por `/regravacoes/anexo/<id>/` com login e permissão. Autorização pendente aparece por ícone e texto e **bloqueia a Declaração**.
+- **Documentos em PDF (ReportLab, Python puro):** a emissão confere o que falta e explica em português. A numeração é por tipo e ano (2026/0001), com trava de linha e restrição única no banco. O PDF emitido é guardado no **banco** (cópia fiel). Se os dados mudarem, uma nova emissão gera um documento com **número novo** que "substitui" o anterior, que fica marcado como substituído e nunca é apagado; se nada mudou, o botão só baixa a cópia já emitida. Emissões e downloads vão para o histórico.
+- **Onde editar o texto:** `regravacoes/documentos/texto_declaracao.py` (declaração) e `texto_recibo.py` (recibo). **Dados da empresa** (razão social, CNPJ, endereço, telefones, cidade, rodapé, logo e responsável do recibo): aba **Empresa**, no sistema (nada disso fica no código). A assinatura em imagem (técnico e responsável do recibo) fica para uma próxima etapa; hoje a linha de assinatura sai em branco com nome e função.
+- **Dados fictícios:** `python manage.py popular_dados` cria 12 regravações (motor, chassi e ambos; agendadas, concluídas, recebidas e pendentes), 4 parceiros, 3 técnicos, uma empresa de EXEMPLO, anexos gerados por código e alguns documentos emitidos. `--refazer-regravacoes` recria só esses. `limpar_dados_teste` também os apaga (e a empresa de exemplo, nunca uma empresa real).
+- **Hospedagem online:** na Vercel o disco é temporário, então os **anexos** se perdem a cada deploy até haver armazenamento externo (`FOTOS_STORAGE=s3`); os **PDFs emitidos** ficam no banco e não se perdem.
+
 ## Estrutura
 
 ```
@@ -167,6 +181,7 @@ cadastros/   Cliente, Aluno, Veículo (modelos, formulários, validadores, views
 servicos/    Tipo de serviço
 atendimentos/ Atendimento, HistoricoAtendimento, regras, formulário e telas
 dashboard/   services.py (cálculos), periodos.py, graficos.py, views e CSV
+regravacoes/  Regravações: parceiros, técnicos, empresa, anexos, documentos PDF (documentos/), numeração
 vip_preparacao/  Registro VIP/Preparação, fotos, histórico, regras.py (conclusão), fotos.py (Pillow), armazenamento.py
 financeiro/  Recebimento, Despesa, categorias, fechamento de mês, regras.py (gravações), services.py (cálculos), graficos.py
 agenda/      Agendamento, horário de funcionamento, regras (regras.py), calendário e pendências

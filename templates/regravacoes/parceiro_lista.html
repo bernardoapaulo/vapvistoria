@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block titulo %}Parceiros indicadores{% endblock %}
+{% block conteudo %}
+  <div class="cabecalho-pagina">
+    <h1>Parceiros</h1>
+    {% if pode_criar %}<a class="btn" href="{% url 'parceiro_novo' %}">{% include "partials/icone.html" with nome="plus" %}Novo parceiro</a>{% endif %}
+  </div>
+  <p class="campo__ajuda">Quem indica clientes para regravação (despachante, loja, oficina...). Aqui você vê quantas indicações cada um fez.</p>
+
+  <form method="get" class="busca">
+    <input type="search" name="q" value="{{ termo }}" placeholder="Buscar por nome, empresa/profissão ou telefone" aria-label="Buscar parceiro">
+    <select name="situacao" aria-label="Situação">
+      <option value="ativos" {% if situacao == "ativos" %}selected{% endif %}>Ativos</option>
+      <option value="inativos" {% if situacao == "inativos" %}selected{% endif %}>Inativos</option>
+      <option value="todos" {% if situacao == "todos" %}selected{% endif %}>Todos</option>
+    </select>
+    <button type="submit" class="btn">Filtrar</button>
+  </form>
+
+  <div class="cartao tabela-wrap">
+    {% if object_list %}
+    <table class="responsiva">
+      <thead><tr><th>Nome</th><th>Empresa / profissão</th><th>Telefone</th><th class="numero">Clientes indicados</th><th class="numero">Regravações</th><th>Situação</th><th></th></tr></thead>
+      <tbody>
+        {% for p in object_list %}
+        <tr>
+          <td data-rotulo="Nome"><a href="{{ p.get_absolute_url }}"><strong>{{ p.nome }}</strong></a></td>
+          <td data-rotulo="Empresa">{{ p.empresa_profissao|default:"—" }}</td>
+          <td data-rotulo="Telefone">{{ p.telefone|default:"—" }}</td>
+          <td data-rotulo="Clientes indicados" class="numero">{{ p.total_clientes }}</td>
+          <td data-rotulo="Regravações" class="numero">{{ p.total_indicacoes }}</td>
+          <td data-rotulo="Situação"><span class="etiqueta {% if p.ativo %}etiqueta--ativo{% else %}etiqueta--inativo{% endif %}">{% if p.ativo %}Ativo{% else %}Inativo{% endif %}</span></td>
+          <td><div class="acoes acoes--linha">
+            <a class="btn btn--secundario btn--pequeno" href="{{ p.get_absolute_url }}">Ver</a>
+            {% if pode_editar %}<a class="btn btn--secundario btn--pequeno" href="{% url 'parceiro_editar' p.pk %}">Editar</a>
+              <form method="post" action="{% url 'parceiro_ativo' p.pk %}">{% csrf_token %}<button type="submit" class="btn btn--secundario btn--pequeno">{% if p.ativo %}Desativar{% else %}Ativar{% endif %}</button></form>{% endif %}
+          </div></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<div class="vazio"><p>Nenhum parceiro encontrado.</p>{% if pode_criar %}<a class="btn" href="{% url 'parceiro_novo' %}">Cadastrar o primeiro parceiro</a>{% endif %}</div>{% endif %}
+  </div>
+  {% include "partials/paginacao.html" %}
+{% endblock %}

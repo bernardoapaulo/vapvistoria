@@ -1,0 +1,28 @@
+/* ==========================================================================
+   VAP Vistoria - módulo Regravações (status, anexos, documentos). Só usa variáveis de tokens.css.
+   O restante (formulário, tabelas, pop-ups, abas) reaproveita base.css e vip.css.
+   ========================================================================== */
+
+/* Status da regravação (sempre com texto) */
+.etiqueta--reg-solicitada { background: var(--cor-status-solicitado-fundo); color: var(--cor-status-solicitado); }
+.etiqueta--reg-agendada { background: var(--cor-status-agendado-fundo); color: var(--cor-status-agendado); }
+.etiqueta--reg-concluida { background: var(--cor-status-concluido-fundo); color: var(--cor-status-concluido); }
+.etiqueta--reg-cancelada { background: var(--cor-status-cancelado-fundo); color: var(--cor-status-cancelado); }
+/* Documento pendente: ícone + texto, nunca só cor */
+.etiqueta--pendente { background: var(--cor-atraso-fundo); color: var(--cor-atraso); }
+
+/* Anexos do formulário */
+.anexos-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: var(--esp-md); margin-bottom: var(--esp-lg); }
+.anexo-campo { background: var(--cor-superficie-2); border: 1px solid var(--vidro-borda-fina); border-radius: var(--raio-sm); padding: var(--esp-sm); }
+.anexo-campo--com-erro { border-color: var(--cor-erro); }
+.anexo-campo__nome { display: flex; flex-wrap: wrap; align-items: center; gap: var(--esp-xs); font-weight: 600; font-size: var(--texto-sm); margin-bottom: var(--esp-xs); }
+.anexo-campo .foto-campo__previa { word-break: break-word; padding: var(--esp-xs); }
+.anexo-campo input[type="file"] { min-height: 0; padding: 0.35rem; font-size: var(--texto-xs); }
+.anexo-mini { vertical-align: middle; border-radius: 4px; border: 1px solid var(--vidro-borda-fina); object-fit: cover; }
+fieldset.campo { border: 0; padding: 0; margin: 0 0 var(--esp-md); min-width: 0; }
+fieldset.campo legend { font-weight: 600; color: var(--cor-titulo); margin-bottom: var(--esp-xs); padding: 0; }
+fieldset.campo ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--esp-md); }
+
+@media print {
+  .anexos-grade, .dialogo { display: none; }
+}

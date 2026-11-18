@@ -11,6 +11,7 @@ Definição dos perfis (grupos) e de suas permissões.
 
 - Vip/Preparação: os dois perfis criam, editam, concluem (lança o recebimento), reabrem e excluem; só o
   Administrador altera o valor e edita um registro já concluído.
+- Regravações: módulo só do Administrador (o Funcionário não o enxerga; ver o comentário em REGRAVACAO_EXTRAS_*).
 - Usuários (/admin/): só o Administrador cadastra e altera (ver, criar e alterar; não exclui; não vira superusuário).
 - Financeiro: tudo é do Administrador. O Funcionário só tem `financeiro.add_recebimento` (registrar
   recebimento na tela do atendimento); não vê o módulo, totais, despesas, nem estorna/edita.
@@ -47,6 +48,12 @@ RECEBIMENTO_EXTRAS = ["ver_financeiro", "estornar_recebimento"]
 # Vip/Preparação: o que cada perfil pode além de ver/criar/editar/excluir (ajuste aqui)
 VIP_EXTRAS_ADMINISTRADOR = ["alterar_valor_vip", "concluir_vip", "reabrir_vip", "editar_concluido_vip"]
 VIP_EXTRAS_FUNCIONARIO = ["concluir_vip", "reabrir_vip"]
+# Regravações: o Funcionário já tem as permissões "finas" abaixo guardadas no banco, mas o módulo fica OCULTO para ele
+# (ver ACESSO_POR_PERFIL). Se você liberar "regravacoes" ao Funcionário: ele vê, cria, edita, conclui/recebe e emite
+# documentos; NÃO altera valor, NÃO gerencia técnicos/parceiros/empresa, NÃO exclui, NÃO reabre e não edita o já lançado.
+REGRAVACAO_EXTRAS_ADMINISTRADOR = ["alterar_valor_regravacao", "concluir_regravacao", "reabrir_regravacao",
+                                   "emitir_documento_regravacao", "editar_lancada_regravacao"]
+REGRAVACAO_EXTRAS_FUNCIONARIO = ["concluir_regravacao", "emitir_documento_regravacao"]
 
 
 def _permissoes(modelos, acoes):
@@ -77,6 +84,12 @@ def criar_grupos():
         + _permissoes_do_app("financeiro", "fechamentomes", ["view"], ["fechar_mes"])
         + _permissoes_do_app("vip_preparacao", "registrovip", TODAS, VIP_EXTRAS_ADMINISTRADOR)
         # Usuários: o Administrador cadastra login e senha e escolhe o perfil em /admin/ (sem excluir; ver contas/admin.py)
+        # Regravações: tudo (por padrão o módulo só aparece para o Administrador)
+        + _permissoes_do_app("regravacoes", "registroregravacao", TODAS, REGRAVACAO_EXTRAS_ADMINISTRADOR)
+        + _permissoes_do_app("regravacoes", "parceiro", TODAS, ["ver_faturamento_parceiro"])
+        + _permissoes_do_app("regravacoes", "tecnico", TODAS)
+        + _permissoes_do_app("regravacoes", "configuracaoempresa", ["view", "change"])
+        + _permissoes_do_app("regravacoes", "documentoemitido", ["view"])
         + _permissoes_do_app("auth", "user", ["view", "add", "change"])
         + _permissoes_do_app("auth", "group", ["view"])
     )
@@ -90,5 +103,9 @@ def criar_grupos():
         # Única exceção no Financeiro: registrar um recebimento na tela do atendimento (caixa do dia a dia).
         + _permissoes_do_app("financeiro", "recebimento", ["add"])
         + _permissoes_do_app("vip_preparacao", "registrovip", TODAS, VIP_EXTRAS_FUNCIONARIO)
+        + _permissoes_do_app("regravacoes", "registroregravacao", ["view", "add", "change"], REGRAVACAO_EXTRAS_FUNCIONARIO)
+        + _permissoes_do_app("regravacoes", "parceiro", ["view"])
+        + _permissoes_do_app("regravacoes", "tecnico", ["view"])
+        + _permissoes_do_app("regravacoes", "documentoemitido", ["view"])
     )
     return admin, func

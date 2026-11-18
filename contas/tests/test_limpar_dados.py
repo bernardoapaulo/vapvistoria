@@ -15,10 +15,14 @@ from cadastros.models import Cliente, Veiculo
 from contas.permissoes import FUNCIONARIO
 from financeiro.models import CategoriaDespesa, Despesa, FechamentoMes, Recebimento, RegistroAuditoria
 from servicos.models import TipoServico
+from regravacoes.models import (
+    AnexoRegravacao, ConfiguracaoEmpresa, DocumentoEmitido, Parceiro, RegistroRegravacao, SequenciaDocumento, Tecnico,
+)
 from vip_preparacao.models import FotoVip, ItemServicoVip, RegistroVip
 
 Usuario = get_user_model()
-MODELOS = (FotoVip, ItemServicoVip, RegistroVip, Agendamento, Recebimento, Despesa, FechamentoMes, RegistroAuditoria,
+MODELOS = (FotoVip, ItemServicoVip, RegistroVip, DocumentoEmitido, SequenciaDocumento, AnexoRegravacao, RegistroRegravacao,
+           Parceiro, Tecnico, Agendamento, Recebimento, Despesa, FechamentoMes, RegistroAuditoria,
            HistoricoAtendimento, Atendimento, Veiculo, Cliente, TipoServico)
 
 
@@ -32,8 +36,8 @@ class LimpezaDosDadosDeTesteTest(TestCase):
     def setUp(self):
         self.pasta = tempfile.mkdtemp(prefix="limpeza_")
         self.addCleanup(shutil.rmtree, self.pasta, ignore_errors=True)
-        for nome in ("imagem", "miniatura"):           # as fotos de exemplo vão para uma pasta temporária
-            armazenamento = FotoVip._meta.get_field(nome).storage
+        armazenamentos = [FotoVip._meta.get_field(n).storage for n in ("imagem", "miniatura")] +                          [AnexoRegravacao._meta.get_field(n).storage for n in ("arquivo", "miniatura")]
+        for armazenamento in armazenamentos:           # as fotos e anexos de exemplo vão para uma pasta temporária
             for atributo in ("base_location", "location"):
                 armazenamento.__dict__[atributo] = self.pasta
             self.addCleanup(lambda a=armazenamento: [a.__dict__.pop(k, None) for k in ("base_location", "location")])
@@ -67,8 +71,16 @@ class LimpezaDosDadosDeTesteTest(TestCase):
         self.assertTrue(Usuario.objects.filter(username="maria_real").exists())
         self.assertFalse(Usuario.objects.filter(username="funcionario_teste").exists())
         self.assertEqual(Group.objects.filter(name__in=["Administrador", "Funcionário"]).count(), 2)
+        self.assertEqual(ConfiguracaoEmpresa.obter().razao_social, "")                     # a empresa de EXEMPLO foi apagada
         self.assertEqual(CategoriaDespesa.objects.count(), categorias)
         self.assertEqual(list(HorarioFuncionamento.objects.values_list("pk", flat=True)), horario)
+
+    def test_empresa_real_ja_configurada_nao_e_apagada(self):
+        cfg = ConfiguracaoEmpresa.obter()
+        cfg.razao_social = "Empresa Real Configurada Ltda"
+        cfg.save()
+        rodar(confirmar=True)
+        self.assertEqual(ConfiguracaoEmpresa.obter().razao_social, "Empresa Real Configurada Ltda")
 
     def test_depois_de_limpo_o_sistema_funciona_e_a_numeracao_recomeca(self):
         rodar(confirmar=True)
@@ -76,7 +88,8 @@ class LimpezaDosDadosDeTesteTest(TestCase):
         servico = TipoServico.objects.create(nome="Serviço real", categoria="limpeza", valor_padrao="99.00")
         self.assertEqual((cliente.pk, servico.pk), (1, 1))
         self.client.force_login(Usuario.objects.get(username="admin_teste"))
-        for nome in ("inicio", "dashboard", "atendimento_lista", "financeiro", "vip_lista", "cliente_lista", "servico_lista", "agenda_calendario"):
+        for nome in ("inicio", "dashboard", "atendimento_lista", "financeiro", "vip_lista", "cliente_lista", "servico_lista", "agenda_calendario",
+                     "regravacao_lista", "parceiro_lista", "tecnico_lista", "empresa"):
             from django.urls import reverse
             self.assertEqual(self.client.get(reverse(nome)).status_code, 200, nome)
 

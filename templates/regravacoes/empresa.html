@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block titulo %}Empresa{% endblock %}
+{% block conteudo %}
+  <div class="cabecalho-pagina"><h1>Empresa</h1></div>
+  {% include "partials/abas_regravacoes.html" with aba="empresa" %}
+  <p class="campo__ajuda">Estes dados aparecem na Declaração e no Recibo em PDF. Nada disso fica escrito no código.</p>
+
+  <form method="post" enctype="multipart/form-data" class="cartao" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="erro-geral" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+    <h2 class="secao-form">Dados da empresa</h2>
+    <div class="grade-campos">
+      {% include "vip_preparacao/campo.html" with campo=form.razao_social %}
+      {% include "vip_preparacao/campo.html" with campo=form.cnpj %}
+      {% include "vip_preparacao/campo.html" with campo=form.endereco larga=1 %}
+      {% include "vip_preparacao/campo.html" with campo=form.telefones %}
+      {% include "vip_preparacao/campo.html" with campo=form.cidade ajuda="Aparece antes da data, no alto dos documentos." %}
+      {% include "vip_preparacao/campo.html" with campo=form.rodape larga=1 ajuda="Texto discreto no pé de página dos PDFs." %}
+    </div>
+    <h2 class="secao-form">Logo</h2>
+    <p class="campo__ajuda">{% if tem_logo %}Há uma logo própria cadastrada.{% else %}Usando a logo padrão do sistema.{% endif %} Para trocar, envie um PNG ou JPG.</p>
+    <div class="grade-campos">
+      {% include "vip_preparacao/campo.html" with campo=form.logo_nova %}
+      {% if tem_logo %}<div class="campo campo--check">{{ form.remover_logo }} <label for="{{ form.remover_logo.id_for_label }}">{{ form.remover_logo.label }}</label></div>{% endif %}
+    </div>
+    <h2 class="secao-form">Recibo</h2>
+    <div class="grade-campos">
+      {% include "vip_preparacao/campo.html" with campo=form.responsavel_recibo_nome ajuda="Quem assina o recibo (a assinatura em imagem fica para uma próxima etapa)." %}
+      {% include "vip_preparacao/campo.html" with campo=form.responsavel_recibo_funcao %}
+    </div>
+    <h2 class="secao-form">Tipos de serviço usados no Financeiro</h2>
+    <p class="campo__ajuda">Quando uma regravação é concluída e recebida, o atendimento no Financeiro e no Dashboard usa o tipo de serviço de acordo com o que foi feito. Escolha entre os tipos da categoria Regravação.</p>
+    <div class="grade-campos">
+      {% include "vip_preparacao/campo.html" with campo=form.servico_motor %}
+      {% include "vip_preparacao/campo.html" with campo=form.servico_chassi %}
+      {% include "vip_preparacao/campo.html" with campo=form.servico_motor_chassi %}
+    </div>
+    <div class="acoes">
+      <button type="submit" class="btn">Salvar</button>
+      <button type="submit" name="criar_servicos" value="1" class="btn btn--secundario" formnovalidate>Criar os 3 tipos de serviço padrão</button>
+    </div>
+  </form>
+{% endblock %}

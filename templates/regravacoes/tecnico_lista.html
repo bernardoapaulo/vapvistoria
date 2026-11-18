@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block titulo %}Técnicos responsáveis{% endblock %}
+{% block conteudo %}
+  <div class="cabecalho-pagina">
+    <h1>Técnicos</h1>
+    {% if perms.regravacoes.add_tecnico %}<a class="btn" href="{% url 'tecnico_novo' %}">{% include "partials/icone.html" with nome="plus" %}Novo técnico</a>{% endif %}
+  </div>
+  <p class="campo__ajuda">Quem assina as declarações como responsável pelo serviço. Desativar um técnico não altera documentos já emitidos.</p>
+  <div class="cartao tabela-wrap">
+    {% if object_list %}
+    <table class="responsiva">
+      <thead><tr><th>Nome</th><th>Função</th><th>Credencial / registro</th><th>Situação</th><th></th></tr></thead>
+      <tbody>
+        {% for t in object_list %}
+        <tr>
+          <td data-rotulo="Nome"><strong>{{ t.nome }}</strong></td>
+          <td data-rotulo="Função">{{ t.funcao|default:"—" }}</td>
+          <td data-rotulo="Credencial">{{ t.credencial|default:"—" }}</td>
+          <td data-rotulo="Situação"><span class="etiqueta {% if t.ativo %}etiqueta--ativo{% else %}etiqueta--inativo{% endif %}">{% if t.ativo %}Ativo{% else %}Inativo{% endif %}</span></td>
+          <td>{% if pode_gerenciar %}<div class="acoes acoes--linha">
+            <a class="btn btn--secundario btn--pequeno" href="{% url 'tecnico_editar' t.pk %}">Editar</a>
+            <form method="post" action="{% url 'tecnico_ativo' t.pk %}">{% csrf_token %}<button type="submit" class="btn btn--secundario btn--pequeno">{% if t.ativo %}Desativar{% else %}Ativar{% endif %}</button></form>
+          </div>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<div class="vazio"><p>Nenhum técnico cadastrado.</p>{% if perms.regravacoes.add_tecnico %}<a class="btn" href="{% url 'tecnico_novo' %}">Cadastrar o primeiro técnico</a>{% endif %}</div>{% endif %}
+  </div>
+{% endblock %}

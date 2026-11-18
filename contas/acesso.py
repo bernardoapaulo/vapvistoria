@@ -26,6 +26,7 @@ MODULOS = {
     "dashboard": ("/dashboard/",),
     "financeiro": ("/financeiro/",),
     "vip": ("/vip/",),
+    "regravacoes": ("/regravacoes/",),
     "admin": ("/admin/",),
 }
 # "inicio" ("/") não é barrado por prefixo: o perfil sem Início é redirecionado à sua página inicial.

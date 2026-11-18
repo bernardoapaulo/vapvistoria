@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load financeiro_extras %}
+{% block titulo %}{{ object.nome }}{% endblock %}
+{% block conteudo %}
+  <div class="cabecalho-pagina">
+    <h1>{{ object.nome }} <span class="etiqueta {% if object.ativo %}etiqueta--ativo{% else %}etiqueta--inativo{% endif %}">{% if object.ativo %}Ativo{% else %}Inativo{% endif %}</span></h1>
+    <div class="acoes">
+      {% if pode_editar %}<a class="btn" href="{% url 'parceiro_editar' object.pk %}">Editar</a>{% endif %}
+      <a class="btn btn--secundario" href="{% url 'parceiro_lista' %}">Voltar</a>
+    </div>
+  </div>
+
+  <div class="cartao">
+    <h2>Dados</h2>
+    <dl class="detalhes">
+      <div><dt>Empresa / profissão</dt><dd>{{ object.empresa_profissao|default:"—" }}</dd></div>
+      <div><dt>Telefone / WhatsApp</dt><dd>{{ object.telefone|default:"—" }}</dd></div>
+    </dl>
+    {% if object.observacoes %}<h3>Observações</h3><p>{{ object.observacoes|linebreaksbr }}</p>{% endif %}
+  </div>
+
+  <form method="get" class="cartao filtros">
+    <h2>Indicações</h2>
+    <div class="filtros__grade">
+      <div class="campo"><label for="f-de">De</label><input id="f-de" type="date" name="de" value="{{ de }}"></div>
+      <div class="campo"><label for="f-ate">Até</label><input id="f-ate" type="date" name="ate" value="{{ ate }}"></div>
+    </div>
+    <div class="acoes"><button type="submit" class="btn">Aplicar período</button><a class="btn btn--secundario" href="{{ object.get_absolute_url }}">Limpar</a></div>
+  </form>
+
+  <div class="indicadores">
+    <div class="indicador"><span class="indicador__titulo">Clientes indicados</span><strong>{{ total_clientes }}</strong></div>
+    <div class="indicador"><span class="indicador__titulo">Regravações (sem canceladas)</span><strong>{{ total_indicacoes }}</strong></div>
+    <div class="indicador"><span class="indicador__titulo">Concluídas e recebidas</span><strong>{{ total_concluidas }}</strong></div>
+    {% if ver_faturamento %}<div class="indicador indicador--entrada"><span class="indicador__titulo">Total faturado (concluídas)</span><strong>{{ total_faturado|moeda }}</strong></div>{% endif %}
+  </div>
+
+  <div class="cartao">
+    <h2>Clientes que este parceiro indicou</h2>
+    {% if clientes_indicados %}
+    <div class="tabela-wrap"><table class="responsiva">
+      <thead><tr><th>Cliente</th><th class="numero">Regravações</th></tr></thead>
+      <tbody>{% for c in clientes_indicados %}<tr><td data-rotulo="Cliente">{% if perms.cadastros.view_cliente %}<a href="{{ c.get_absolute_url }}">{{ c.nome }}</a>{% else %}{{ c.nome }}{% endif %}</td><td data-rotulo="Regravações" class="numero">{{ c.indicacoes }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+    {% else %}<p class="vazio">Nenhum cliente indicado no período.</p>{% endif %}
+  </div>
+
+  <div class="cartao">
+    <h2>Últimas regravações</h2>
+    {% if registros %}
+    <div class="tabela-wrap"><table class="responsiva">
+      <thead><tr><th>Placa</th><th>Cliente</th><th>Serviço</th><th>Status</th></tr></thead>
+      <tbody>{% for r in registros %}<tr>
+        <td data-rotulo="Placa"><a class="placa" href="{{ r.get_absolute_url }}">{{ r.placa }}</a></td>
+        <td data-rotulo="Cliente">{{ r.cliente.nome }}</td><td data-rotulo="Serviço">{{ r.servicos_texto }}</td>
+        <td data-rotulo="Status">{% include "regravacoes/etiquetas.html" %}</td></tr>{% endfor %}</tbody>
+    </table></div>
+    {% else %}<p class="vazio">Nenhuma regravação no período.</p>{% endif %}
+  </div>
+{% endblock %}

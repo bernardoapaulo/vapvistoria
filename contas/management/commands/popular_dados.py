@@ -15,6 +15,7 @@ from atendimentos.dados_ficticios import gerar_atendimentos
 from cadastros.models import Aluno, Cliente, Veiculo
 from contas.permissoes import ADMINISTRADOR, FUNCIONARIO, criar_grupos
 from financeiro.dados_ficticios import gerar_despesas
+from regravacoes.dados_ficticios import gerar_regravacoes
 from servicos.models import TipoServico
 from vip_preparacao.dados_ficticios import gerar_registros_vip
 
@@ -119,6 +120,10 @@ class Command(BaseCommand):
             help="Apaga TODOS os registros de VIP/Preparação (com as fotos e os atendimentos que geraram) e gera os fictícios de novo.",
         )
         parser.add_argument(
+            "--refazer-regravacoes", action="store_true",
+            help="Apaga TODAS as regravações (com anexos, documentos emitidos e os atendimentos que geraram) e gera as fictícias de novo.",
+        )
+        parser.add_argument(
             "--refazer-financeiro", action="store_true",
             help="Apaga TODAS as despesas, fechamentos de mês e auditoria deles e gera os fictícios de novo.",
         )
@@ -194,6 +199,12 @@ class Command(BaseCommand):
             self.stdout.write(f"{registros} registros de VIP/Preparação fictícios gerados (com fotos de exemplo).")
         else:
             self.stdout.write("Registros de VIP/Preparação já existem; nada foi alterado (use --refazer-vip para recriar).")
+
+        regravacoes = gerar_regravacoes(usuarios, refazer=options["refazer_regravacoes"])
+        if regravacoes:
+            self.stdout.write(f"{regravacoes} regravações fictícias geradas (com parceiros, técnicos, anexos e documentos de exemplo).")
+        else:
+            self.stdout.write("Regravações já existem; nada foi alterado (use --refazer-regravacoes para recriar).")
 
         self.stdout.write(self.style.SUCCESS("Dados fictícios criados."))
         self.stdout.write("Usuários de teste:")

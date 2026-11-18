@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% load static l10n financeiro_extras regravacoes_extras %}
+{% block titulo %}Regravação {{ object.placa }}{% endblock %}
+{% block conteudo %}
+  <div class="cabecalho-pagina">
+    <h1><span class="placa">{{ object.placa }}</span> {% with r=object %}{% include "regravacoes/etiquetas.html" %}{% endwith %}
+      <span class="etiqueta etiqueta--pagto-{{ object.recebimento_situacao }}">{{ object.get_recebimento_situacao_display }}</span></h1>
+    <div class="acoes">
+      {% if pode_concluir %}
+        <button type="button" class="btn" data-concluir-reg data-url="{% url 'regravacao_concluir' object.pk %}" data-voltar="{{ object.get_absolute_url }}" data-placa="{{ object.placa }}"
+                data-concluida="{{ object.data_concluida|date:'Y-m-d' }}" data-tecnico="{{ object.tecnico_id|default_if_none:'' }}" data-situacao="{{ object.recebimento_situacao }}"
+                data-forma="{{ object.forma_pagamento }}" data-recebimento="{{ object.data_recebimento|date:'Y-m-d' }}">Concluir / receber</button>
+      {% endif %}
+      {% if pode_reabrir %}
+        <form method="post" action="{% url 'regravacao_reabrir' object.pk %}" data-confirmar="Reabrir esta regravação? O recebimento lançado no Financeiro será estornado (fica registrado no histórico) e o atendimento voltará para Em andamento.">
+          {% csrf_token %}<button type="submit" class="btn btn--secundario">{% include "partials/icone.html" with nome="rotate-ccw" %}Reabrir</button></form>
+      {% endif %}
+      {% if pode_editar %}<a class="btn btn--secundario" href="{% url 'regravacao_editar' object.pk %}">{% include "partials/icone.html" with nome="pencil" %}Editar</a>{% endif %}
+      {% if pode_excluir %}<a class="btn btn--perigo" href="{% url 'regravacao_excluir' object.pk %}">{% include "partials/icone.html" with nome="trash-2" %}Excluir</a>{% endif %}
+      <a class="btn btn--secundario" href="{% url 'regravacao_lista' %}">Voltar</a>
+    </div>
+  </div>
+  {% include "partials/abas_regravacoes.html" with aba="" %}
+
+  {% if object.cancelada %}<div class="aviso"><p><strong>Regravação cancelada.</strong> Motivo: {{ object.motivo_cancelamento }}</p></div>{% endif %}
+
+  <div class="cartao">
+    <h2>Dados</h2>
+    <dl class="detalhes">
+      <div><dt>Parceiro indicador</dt><dd>{% if object.parceiro %}{% if perms.regravacoes.view_parceiro %}<a href="{{ object.parceiro.get_absolute_url }}">{{ object.parceiro.nome }}</a>{% else %}{{ object.parceiro.nome }}{% endif %}{% else %}—{% endif %}</dd></div>
+      <div><dt>Cliente indicado</dt><dd>{% if perms.cadastros.view_cliente %}<a href="{{ object.cliente.get_absolute_url }}">{{ object.cliente.nome }}</a>{% else %}{{ object.cliente.nome }}{% endif %}</dd></div>
+      <div><dt>Proprietário</dt><dd>{{ object.nome_proprietario|default:"—" }}{% if object.proprietario_e_cliente %} <small>(o próprio cliente)</small>{% endif %}</dd></div>
+      <div><dt>Veículo</dt><dd>{{ object.veiculo_texto|default:"—" }}</dd></div>
+      <div><dt>Ano / modelo</dt><dd>{{ object.ano_modelo|default:"—" }}</dd></div>
+      <div><dt>Cor</dt><dd>{% if object.cor %}<span class="amostra amostra--{{ object.cor }}" aria-hidden="true"></span>{{ object.cor_texto }}{% else %}—{% endif %}</dd></div>
+      <div><dt>Chassi</dt><dd>{{ object.chassi|default:"—" }}</dd></div>
+      <div><dt>Número do motor</dt><dd>{{ object.numero_motor|default:"—" }}</dd></div>
+      <div><dt>Serviço</dt><dd>{{ object.servicos_texto }}</dd></div>
+      <div><dt>Técnico responsável</dt><dd>{{ object.tecnico.nome|default:"—" }}</dd></div>
+      <div><dt>Data agendada</dt><dd>{{ object.data_agendada|date:"d/m/Y"|default:"—" }}</dd></div>
+      <div><dt>Data do serviço concluído</dt><dd>{{ object.data_concluida|date:"d/m/Y"|default:"—" }}</dd></div>
+      <div><dt>Valor</dt><dd><strong>{% if object.valor is not None %}{{ object.valor|moeda }}{% else %}—{% endif %}</strong></dd></div>
+      <div><dt>Recebimento</dt><dd>{{ object.get_recebimento_situacao_display }}{% if object.recebimento_situacao == "recebido" %} · {{ object.get_forma_pagamento_display }} · {{ object.data_recebimento|date:"d/m/Y" }}{% endif %}</dd></div>
+      {% if object.lancado %}
+        <div><dt>Financeiro</dt><dd>Lançado em {{ object.lancado_em|date:"d/m/Y H:i" }}{% if perms.atendimentos.view_atendimento %} · <a href="{{ object.atendimento.get_absolute_url }}">Atendimento #{{ object.atendimento_id }}</a>{% endif %}</dd></div>
+      {% endif %}
+      <div><dt>Criado por</dt><dd>{{ object.criado_por.get_username|default:"—" }} em {{ object.criado_em|date:"d/m/Y H:i" }}</dd></div>
+      <div><dt>Última alteração</dt><dd>{{ object.alterado_por.get_username|default:"—" }} em {{ object.alterado_em|date:"d/m/Y H:i" }}</dd></div>
+    </dl>
+    {% if object.observacao %}<h3>Observação</h3><p>{{ object.observacao|linebreaksbr }}</p>{% endif %}
+  </div>
+
+  <div class="cartao">
+    <h2>Documentos anexados</h2>
+    <ul class="lista-documentos">
+      {% for tipo, rotulo in tipos_anexo %}
+        <li>
+          <span>{{ rotulo }}</span>
+          {% with a=anexos_por_tipo|get_item:tipo %}
+            {% if a %}
+              <span class="etiqueta etiqueta--ativo">{% include "partials/icone.html" with nome="check" %}Anexado</span>
+              <a class="btn btn--secundario btn--pequeno" href="{% url 'anexo_baixar' a.pk 'arquivo' %}" target="_blank" rel="noopener">Abrir</a>
+              {% if a.e_imagem %}<img class="anexo-mini" src="{% url 'anexo_baixar' a.pk 'mini' %}" alt="Miniatura: {{ rotulo }}" width="64" height="48" loading="lazy">{% endif %}
+            {% elif tipo in exigidos %}
+              <span class="etiqueta etiqueta--pendente">{% include "partials/icone.html" with nome="paperclip" %}Pendente (exigida)</span>
+            {% else %}
+              <span class="etiqueta">Não anexado</span>
+            {% endif %}
+          {% endwith %}
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  {% if pode_emitir %}
+  <div class="cartao">
+    <h2>Documentos em PDF</h2>
+    <div class="acoes">
+      <form method="post" action="{% url 'documento_emitir' object.pk 'declaracao' %}" target="_blank">{% csrf_token %}
+        <button type="submit" class="btn" {% if pendencias_declaracao %}aria-describedby="pend-declaracao"{% endif %}>{% include "partials/icone.html" with nome="file-text" %}Declaração (PDF)</button></form>
+      <form method="post" action="{% url 'documento_emitir' object.pk 'recibo' %}" target="_blank">{% csrf_token %}
+        <button type="submit" class="btn btn--secundario" {% if pendencias_recibo %}aria-describedby="pend-recibo"{% endif %}>{% include "partials/icone.html" with nome="file-text" %}Recibo (PDF)</button></form>
+    </div>
+    {% if pendencias_declaracao %}<div class="aviso" id="pend-declaracao"><p><strong>Para emitir a Declaração falta:</strong></p><ul>{% for p in pendencias_declaracao %}<li>{{ p }}</li>{% endfor %}</ul></div>{% endif %}
+    {% if pendencias_recibo %}<div class="aviso" id="pend-recibo"><p><strong>Para emitir o Recibo falta:</strong></p><ul>{% for p in pendencias_recibo %}<li>{{ p }}</li>{% endfor %}</ul></div>{% endif %}
+    <h3>Emitidos</h3>
+    {% if documentos %}
+    <div class="tabela-wrap"><table class="responsiva">
+      <thead><tr><th>Documento</th><th>Número</th><th>Emitido em</th><th>Por</th><th>Situação</th><th></th></tr></thead>
+      <tbody>
+        {% for d in documentos %}
+        <tr>
+          <td data-rotulo="Documento">{{ d.get_tipo_display }}</td>
+          <td data-rotulo="Número"><strong>{{ d.numero }}</strong>{% if d.substitui %} <small>(substitui {{ d.substitui.numero }})</small>{% endif %}</td>
+          <td data-rotulo="Emitido em">{{ d.emitido_em|date:"d/m/Y H:i" }}</td>
+          <td data-rotulo="Por">{{ d.emitido_por.get_username|default:"—" }}</td>
+          <td data-rotulo="Situação">{% if d.substituido %}<span class="etiqueta etiqueta--inativo">Substituído</span>{% else %}<span class="etiqueta etiqueta--ativo">Vigente</span>{% endif %}</td>
+          <td><a class="btn btn--secundario btn--pequeno" href="{% url 'documento_baixar' d.pk %}" target="_blank" rel="noopener">Baixar / imprimir</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}<p class="vazio">Nenhum documento emitido ainda.</p>{% endif %}
+  </div>
+  {% endif %}
+
+  {% if pode_cancelar %}
+  <div class="cartao">
+    <h2>Cancelar regravação</h2>
+    <form method="post" action="{% url 'regravacao_cancelar' object.pk %}" data-confirmar="Cancelar esta regravação?">
+      {% csrf_token %}
+      <div class="campo"><label for="motivo">Motivo do cancelamento</label><input id="motivo" type="text" name="motivo" maxlength="200" required></div>
+      <button type="submit" class="btn btn--perigo">Cancelar regravação</button>
+    </form>
+  </div>
+  {% endif %}
+
+  <div class="cartao">
+    <h2>Histórico</h2>
+    <ol class="linha-do-tempo">
+      {% for h in historico %}
+        <li class="linha-do-tempo__item linha-do-tempo__item--{{ h.tipo }}">
+          <div class="linha-do-tempo__titulo"><strong>{{ h.get_tipo_display }}</strong>{% if h.valor_anterior %}: {{ h.valor_anterior }} &rarr; {{ h.valor_novo }}{% else %}: {{ h.valor_novo }}{% endif %}</div>
+          <div class="linha-do-tempo__meta">{{ h.data_hora|date:"d/m/Y H:i" }} · {{ h.usuario.get_username|default:"sistema" }}</div>
+        </li>
+      {% empty %}<li class="vazio">Sem registros.</li>{% endfor %}
+    </ol>
+  </div>
+
+  {% if pode_concluir %}{% include "regravacoes/dialogo_concluir.html" %}{% endif %}
+{% endblock %}
+{% block scripts %}
+  <script src="{% static 'js/vip_comum.js' %}"></script>
+  <script src="{% static 'js/regravacoes_comum.js' %}"></script>
+{% endblock %}

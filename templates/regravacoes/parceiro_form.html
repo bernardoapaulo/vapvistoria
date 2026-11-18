@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block conteudo %}
+  <h1>{{ titulo }}</h1>
+  <form method="post" class="cartao" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="erro-geral" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+    {% for campo in form %}
+      {% if campo.field.widget.input_type == "checkbox" %}
+        <div class="campo campo--check">{{ campo }} <label for="{{ campo.id_for_label }}">{{ campo.label }}</label></div>
+      {% else %}
+        {% include "vip_preparacao/campo.html" %}
+      {% endif %}
+    {% endfor %}
+    <div class="acoes">
+      <button type="submit" class="btn">Salvar</button>
+      <a class="btn btn--secundario" href="{% if object %}{{ object.get_absolute_url }}{% else %}{% url 'parceiro_lista' %}{% endif %}">Cancelar</a>
+    </div>
+  </form>
+{% endblock %}

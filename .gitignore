@@ -16,3 +16,15 @@ arquivos_privados/
 referencias/
 /*.jpg
 static/vendor/**/*.map
+/*.jpeg
+/*.png
+
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
+    ]
+  }
+}
